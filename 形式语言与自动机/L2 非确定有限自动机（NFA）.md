@@ -44,7 +44,7 @@
 - 定理：**NFA与DFA有着相同的表达能力**
 	- DFA到NFA：显然
 	- NFA到DFA的算法：给定NFA，$M=(Q,\Sigma,\delta,q_o,F)$
-		1. DFA的状态集选取NFA的幂集：$2^Q=\{\emptyset,[q_0],[q_1],[q_1q_2]\}$
+		1. DFA的状态集选取NFA的幂集：$2^Q=\{\emptyset,[q_0],[q_1],[q_1q_2],...\}$
 		2. 若NFA的初始状态为$q_0$，则DFA的初始状态是$[EC(q_0)]$
-		3. 对DFA状态$[q_i,q_j,...,q_m]$，如果在NFA中有迁移：$$\left.\begin{array}{l}&\delta^*(q_i,a),)\\&\delta^*(q_i,a),)\right\}=\{q_i',q_j',...,q_m'\}$$则在DFA中添加迁移：$\delta([q_iq_j...q_m],a)=[q_i'q_j'...q_m']$
+		3. 对DFA状态$[q_i,q_j,...,q_m]$，如果在NFA中有迁移：$$\left.\begin{array}{l}&\delta^*(q_i,a),\\&\delta^*(q_j,a),\\&...\end{array}\right\}=\{q_i',q_j',...,q_m'\}$$则在DFA中添加迁移：$\delta([q_iq_j...q_m],a)=[q_i'q_j'...q_m']$
 		4. 对字母表中每个字符重复上述步骤，直到没有新的转移
