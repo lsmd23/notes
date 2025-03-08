@@ -25,7 +25,7 @@
 - 状态转移表：状态转移函数也可以用表表示
 	- 例：![[Pasted image 20250305110524.png]]
 - $\epsilon$-闭包：
-	- 状态q的$\epsilon$-闭包是q包括q资深的$\epsilon$路径到达的所有状态，记为$EC(q)$
+	- 状态q的$\epsilon$-闭包是q包括q自身的$\epsilon$路径到达的所有状态，记为$EC(q)$
 	- 归纳定义：$NFA,q\in Q,EC(q):$
 		- $q\in EC(q)$
 		- 若$p\in EC(q)$且$r\in \delta(p,\epsilon)$，则$r\in EC(q)$
