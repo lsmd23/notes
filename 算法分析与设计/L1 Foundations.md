@@ -1,0 +1,22 @@
+## 算法的增长速度
+- 算法运行所需的时间$T(n)$随数据规模$n$单调增长，研究算法时，关注$n\rightarrow \infty$的情况
+- $\Theta$标记：
+	- 定义：![[Pasted image 20250218200745.png]]
+	- 称$\Theta(g(n))$为$f(n)$的渐近紧界
+	- ![[Pasted image 20250218200854.png]]
+- $\Omega$标记和$O$标记：
+	- 渐近上界：![[Pasted image 20250218201117.png]]
+	- 渐近下界：![[Pasted image 20250218201124.png]]
+	- ![[Pasted image 20250218201136.png]]
+- $\omega$标记和$\omicron$标记：
+	- 定义：![[Pasted image 20250218201304.png]]
+	- 区别：使用大于号或小于号定义
+- 基本数学公式和函数：
+	- 向上/下取整：![[Pasted image 20250218201601.png]]
+	- 对数函数：![[Pasted image 20250218201622.png]]
+	- 阶乘的斯特林估计：![[Pasted image 20250218201640.png]]
+		- 推论：$n!=o(n^n)$，$n!=\omega(2^n)$，$\lg(n!)=\Theta(n\lg n)$
+	- 对数函数的扩展：![[Pasted image 20250218201827.png]]
+		- $\lg^*2=1,\lg^*4=2,\lg^*16=3$
+		- $\lg^*65536=4,\lg^*(2^{65536})=5$
+		- 几乎是增长最慢的函数
