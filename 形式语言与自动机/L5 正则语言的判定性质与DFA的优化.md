@@ -49,15 +49,32 @@
 [[L7 关系#等价关系和划分]]
 ## DFA状态集上的等价关系
 - 状态的等价：
-	- 二元关系：设DFA，$D=()$，定义二元关系$R$：
+	- 二元关系：设DFA，$D=()$，定义二元关系$R$：$\forall p,q\in Q,pRq$，当且仅当$\forall w\in\Sigma^*,\delta^*(p,w)\Leftrightarrow\delta^*(q,w)\in F$
 		- 可以证明：该二元关系是等价关系
 		- 进而，这一关系可以导出一个状态集的划分，同一划分块中的状态是相互等价的
 ## 状态集划分的算法——填表法
 - 填表算法：
+	- 递归基础：若$p$为终态，$q$为非终态，则$p$与$q$是可区分的
+	- 递归：若$p$与$q$是可区分的，状态$r,s$通过输入符号$a$可以分别转移到$p$和$q$，即$\delta(r,a)=p,\delta(s,a)=q$，则$r$和$s$也是可区别的
+	- 例：![[Pasted image 20250326115744.png]]![[Pasted image 20250326115752.png]]
+- 正确性证明：略
 ## 最优DFA
 - 步骤：
 	1. 删除从初态不可达的状态及其相关的边，得到DFA：$A=(Q,\Sigma,\delta,q_0,F)$
 	2. 使用填表法找出所有的等价类
 	3. 计算当前状态集的划分块，用$[q]$表示
 	4. 构造等价的DFA：$B=(Q_B,\Sigma,\delta_B,[q_0],F_B)$，其中：$Q_B=\{[q]|q\in Q\},F_B=\{[q]|q\in F\},\delta_B([q],a)=[\delta(q,a)]$
-- 可以证明，这样化简得到的自动机，是状态数目的最小值 
+- 可以证明，这样化简得到的自动机，是状态数目的最小值，即最优DFA
+# 有限自动机的扩展
+## Moore自动机
+- DFA和NFA的输出，只有接受和拒绝两种结果；但有时，需要自动机输出一个字符串而不仅仅是一个布尔型的结果
+- Moore自动机：
+	- 定义输出字母表$\Lambda$，每个状态上，定义输出符号$\omicron\in\Lambda$，且输出符号**仅与当前状态相关**
+	- 即：Moore自动机是六元组$A=(Q,\Sigma,\Lambda,\delta,q_0,G)$，其中$G:Q\rightarrow \Lambda$为输出函数
+	- 例：![[Pasted image 20250326120339.png]]
+## Mealy自动机
+- 输出函数不仅仅与状态相关，而是和输入也相关
+- Mealy自动机：
+	- 定义输出字母表$\Lambda$，每个状态上，定义输出符号$\omicron\in\Lambda$，且输出符号**与当前状态和输入符号相关**
+	- 即：Mealy自动机是六元组$A=(Q,\Sigma,\Lambda,\delta,q_0,G)$，其中$G:Q\times\Sigma\rightarrow \Lambda$为输出函数
+## 有限自动机的计算复杂性
