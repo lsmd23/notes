@@ -29,3 +29,39 @@
 	- 若$S\Rightarrow_{lm}^*\alpha$，则$\alpha$是一个左句型
 	- 若$S\Rightarrow_{rm}^*\alpha$，则$\alpha$是一个右句型
 	- 若句型$\alpha\in T^*$，则称$\alpha$为一个句子
+# CFG的应用
+- 正则表达式：匹配字符串
+	- 元字符：![[Pasted image 20250409095957.png]]![[Pasted image 20250409100004.png]]
+	- 缩写字符：![[Pasted image 20250409100021.png]]
+	- 正则表达式的范式可以通过CFG生成
+	- 类似的，其他规范性的语句也可通过CFG生成
+		- 命题逻辑中的语法
+		- 一阶谓词逻辑中的语法
+		- 线性时序逻辑中的文法
+- 程序设计语言的语法描述与分析——Yacc语法规则
+	- 程序的编译时，需要分析程序的语法和逻辑，借助CFG可以得到词法分析器的生成器和语法解析器的生成器
+	- Yacc源程序式样：
+```
+# 声明节：定义文法中的单词(%token命令)以及c代码相关声明
+
+%%
+# 语法规则节：定义语法规则以及语义动作
+# 格式：非终结符:符号串 {C语句表示的语义动作}
+
+%%
+# 支撑函数节：用到的局部C函数定义
+```
+- 标记语言：标记语言绝大多数都可以用CFG解释
+	- HTML：网页的描述语言
+	- SGML：国际标准标记语言
+	- JSON：更适合描述各类数据的正则语言
+		- 例：![[Pasted image 20250409104517.png]]
+	- XML：SGML的一个子集，可以通过文档定义DTD自定义tag的类型
+		- DTD的格式：DTD实质上是一个正则表示
+```
+<!DOCTYPE name-of-DTD
+	[list of element definitions]>
+	<!ELEMENTelement-name
+	(description of the element)>
+```
+# CFG的转换
