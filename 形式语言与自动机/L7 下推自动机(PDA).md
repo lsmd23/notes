@@ -28,3 +28,14 @@
 	- $q$：当前状态
 	- $w$：剩余输入串
 	- $\gamma$：栈中当前符号串
+- 传递：
+	- 定义：设PDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$，$\vdash_P$或$\vdash$满足：若$(p,\alpha)\in\delta(q,a,X)$，则$(q,aw,X\beta)\vdash(p,w,\alpha\beta)$，其中$p,q\in Q,a\in \Sigma,w\in \Sigma^*,X\in \Gamma.\alpha,\beta\in\Gamma^*$
+		- 例：![[Pasted image 20250416120328.png]]![[Pasted image 20250416120334.png]]则有传递：$(q_1,bbb,aaaz_0)\vdash(q_2,bb,aaz_0)$
+	- 传递闭包：$\vdash_P^*$或$\vdash^*$定义为：对任意即时描述$I$，有$I\vdash^*I$；若$I\vdash K,K\vdash^*J$，则有：$I\vdash^*J$
+- 定理：设PDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$，若$(q,x,\alpha)\vdash^*(p,y,\beta)$，则对任意的$w\in\Sigma^*,\gamma\in\Gamma^*$，有：$(q,xw,\alpha\gamma)\vdash^*(p,yw,\beta\gamma)$
+	- 也即：传递之间是相互独立的
+# PDA的语言
+- 终态型PDA的语言：设NPDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$，语言定义为：$L(M)=\{w|w\in\Sigma^*,(q_0,w,z_0)\vdash_M^*(q_f,\epsilon,u),u\in\Gamma^*\}$其中$(q_0,w,z_0)$是初始状态，$(q_f,\epsilon,u)$是最终状态
+- 空栈型PDA的语言：设NPDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0)$，语言定义为
+- 关系：
+	- 
