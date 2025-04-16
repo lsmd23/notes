@@ -77,6 +77,11 @@
 - 不存在通用的CFG构造算法
 	- 对正则语言，只需构造线性文法即可
 	- 对非正则语言，优先考虑文法中的递归过程，保证递归的循环和完结
+- 例：构造CFG，满足$L(G)=\{w\in \{0,1\}^*|n_0(w)=n_1(w)\}$
+	- ![[Pasted image 20250416095556.png]]
+	- 正确性证明：![[Pasted image 20250416095610.png]]![[Pasted image 20250416095619.png]]
+- 例：![[Pasted image 20250416102912.png]]![[Pasted image 20250416102932.png]]
+- 例：![[Pasted image 20250416102949.png]]![[Pasted image 20250416103005.png]]
 # CFG的应用
 - 正则表达式：匹配字符串
 	- 元字符：![[Pasted image 20250409095957.png]]![[Pasted image 20250409100004.png]]
@@ -112,4 +117,3 @@
 	<!ELEMENTelement-name
 	(description of the element)>
 ```
-# CFG的转换
