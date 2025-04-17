@@ -36,6 +36,9 @@
 	- 也即：传递之间是相互独立的
 # PDA的语言
 - 终态型PDA的语言：设NPDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$，语言定义为：$L(M)=\{w|w\in\Sigma^*,(q_0,w,z_0)\vdash_M^*(q_f,\epsilon,u),u\in\Gamma^*\}$其中$(q_0,w,z_0)$是初始状态，$(q_f,\epsilon,u)$是最终状态
-- 空栈型PDA的语言：设NPDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0)$，语言定义为
+- 空栈型PDA的语言：设NPDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0)$，语言定义为$L(M)=\{w|(q_0,w,z_0)\vdash^*(q,\epsilon,\epsilon),q\in Q\}$（也即可以使栈清空的串）
 - 关系：
-	- 
+	- 对空栈型PDA：$P_N=(Q,\Sigma,\Gamma,\delta,q_0,Z_0),L=L(P_N)$，存在一个终态型PDA：$P_F$，使得$L=L(P_F)$
+		- 证明：![[Pasted image 20250416130348.png]]
+	- 对终态型PDA：$P_F=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F),L=L(P_F)$，存在一个空栈型PDA：$P_N$，使得$L=L(P_N)$
+		- 证明：![[Pasted image 20250416130448.png]]
