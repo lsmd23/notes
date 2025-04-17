@@ -42,3 +42,10 @@
 		- 证明：![[Pasted image 20250416130348.png]]
 	- 对终态型PDA：$P_F=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F),L=L(P_F)$，存在一个空栈型PDA：$P_N$，使得$L=L(P_N)$
 		- 证明：![[Pasted image 20250416130448.png]]
+# PDA与CFG的关系
+- 定理：上下文无关文法的语言和PDA的语言等价
+- CFG到PDA：对CFG：$G=(V,T,S,P)$，可以构造空栈型PDA：$M=(\{q\},T,V\cup T,\delta,q,S)$
+	- 定义转移函数：
+		- 对每一个$A\in V$，有：$\delta(q,\epsilon,A)=\{(q,\beta)|\text{“}A\rightarrow \beta\text{”}\in P\}$
+		- 对每一个$a\in T$，有：$\delta(q,a,a)=\{(q,\epsilon)\}$
+	- 例：![[Pasted image 20250417175922.png]]![[Pasted image 20250417175940.png]]
