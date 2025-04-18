@@ -49,3 +49,11 @@
 		- 对每一个$A\in V$，有：$\delta(q,\epsilon,A)=\{(q,\beta)|\text{“}A\rightarrow \beta\text{”}\in P\}$
 		- 对每一个$a\in T$，有：$\delta(q,a,a)=\{(q,\epsilon)\}$
 	- 例：![[Pasted image 20250417175922.png]]![[Pasted image 20250417175940.png]]
+	- 证明：
+- PDA到CFG：对空栈型PDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0)$，可以构造CFG：$G=(V,\Sigma,P,S)$，其中$V=\{S\}\cup\{[pX q]|p,q\in Q,X\in \Gamma\}$
+	- 产生式集合定义如下：
+		1. 对$\forall p\in Q$，G包含产生式$S\rightarrow [q_0Z_0p]$
+		2. 变量$[pXq]$的产生式：
+			1) 若$(q,\epsilon)\in \delta(p,a,X)$，则：$[pXq]\rightarrow a$
+			2) 若$(q,X_1X_2\cdots X_k)\in \delta(p,a,X)$，则G包含产生式$[pXp_k]\rightarrow a[qX_1p_1][p_1X_2p_2]\cdots[p_{k-1}X_kp_k]$，其中$a\in \Sigma\cup\{\epsilon\};\forall p_i\in Q,i=1,2,\cdots,k$
+	- 例：![[Pasted image 20250418153719.png]]![[Pasted image 20250418153737.png]]
