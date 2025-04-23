@@ -49,7 +49,7 @@
 		- 对每一个$A\in V$，有：$\delta(q,\epsilon,A)=\{(q,\beta)|\text{“}A\rightarrow \beta\text{”}\in P\}$
 		- 对每一个$a\in T$，有：$\delta(q,a,a)=\{(q,\epsilon)\}$
 	- 例：![[Pasted image 20250417175922.png]]![[Pasted image 20250417175940.png]]
-	- 证明：
+	- 证明：采用归纳法证明
 - PDA到CFG：对空栈型PDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0)$，可以构造CFG：$G=(V,\Sigma,P,S)$，其中$V=\{S\}\cup\{[pX q]|p,q\in Q,X\in \Gamma\}$
 	- 产生式集合定义如下：
 		1. 对$\forall p\in Q$，G包含产生式$S\rightarrow [q_0Z_0p]$
@@ -57,3 +57,32 @@
 			1) 若$(q,\epsilon)\in \delta(p,a,X)$，则：$[pXq]\rightarrow a$
 			2) 若$(q,X_1X_2\cdots X_k)\in \delta(p,a,X)$，则G包含产生式$[pXp_k]\rightarrow a[qX_1p_1][p_1X_2p_2]\cdots[p_{k-1}X_kp_k]$，其中$a\in \Sigma\cup\{\epsilon\};\forall p_i\in Q,i=1,2,\cdots,k$
 	- 例：![[Pasted image 20250418153719.png]]![[Pasted image 20250418153737.png]]
+# 确定下推自动机(DPDA)
+## 基本概念
+- 定义：对某PDA：$P=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$，其被称为确定下推自动机(DPDA)，若
+	- 对$a\in \Sigma\vee a=\epsilon,X\in \Gamma-\{\epsilon\}$，转移函数$\delta(q,a,X)$最多包含一个元素
+	- 对$a\in \Sigma\wedge a=\epsilon$，若$\delta(q,a,X)\neq \emptyset$，则$\delta(q,\epsilon,X)=\emptyset$
+	- 含义：
+- DPDA的语言与其它语言的关系：
+	- 显然，DPDA的语言是CFG的语言的真子集
+	- 定理：若L是正则语言，则存在DPDA：P使得$L(P)=L$
+		- 证明：
+## 空栈型DPDA
+- 定义：
+- 语言：
+- 前缀性质：
+- 定理：语言L是空栈型DPDA的语言，当且仅当L具有前缀性质且L是某终态型DPDA的语言
+	- 空栈型DPDA的语言是终态型DPDA的语言的真子集
+## DPDA与二义文法
+- 定理：若语言L是空栈型DPDA的语言，则存在无二义的上下文无关文法G使得$L=L(G)$
+	- 证明思路：前节中，从空栈型PDA构造等价CFG的方法，构造与DPDA等价的CFG；可证对于任何所接受的串w，此CFG有唯一的最左推导，因而是无二义文法
+- 定理：若语言L是终态型DPDA的语言，则存在无二义的上下文无关文法G使得$L=L(G)$
+	- 证明思路：
+- 也即，**DPDA的语言是CFG非固有二义语言的真子集**
+# CFG的化简与规范
+- 每个转移函数占用计算机的资源，因此，对CFG进行化简是很有必要的
+- 消去无用符号：
+	- 有用符号：
+- 消去$\epsilon$产生式
+- 消去单一产生式
+- CFG的化简与Chomsky范式
