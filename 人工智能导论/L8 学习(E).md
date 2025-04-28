@@ -1,4 +1,4 @@
-# Transformer
+# Transformer神经网络
 - 语言模型：
 	- 抽象成数学模型，即预测一离散的条件概率分布：$P(\text{word}_i|\text{word}_1,\cdots,\text{word}_{i-1})$。也即已出现词条件下某词的概率分布情况
 	- Transformer架构最早被用来处理语言模型
