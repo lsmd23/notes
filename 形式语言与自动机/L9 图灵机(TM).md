@@ -21,7 +21,14 @@
 	- $F$：终态集合
 - 例：![[Pasted image 20250507114214.png]]
 # 图灵机的即时描述
-- 图灵机$M=(Q,\Sigma,\Gamma,\delta,q_0,B,F)$的当前格局$X_1X_2\cdots X_{i-1}qX_iX_{i+1}\cdots X_n$（也即描述带上的所有除空白符以外的字符）
-	- 当前状态为$q$，当前读头位于
-
+- 图灵机$M=(Q,\Sigma,\Gamma,\delta,q_0,B,F)$的当前格局（也即描述带上的所有除空白符以外的字符）
+	- 当前状态为$q$，当前读头位于$X_i$
+- 推导关系：定义推导关系$\vdash_M$	
+	- 若有$\delta(q,X_i)=(p,Y,L)$，则$X_1X_2\cdots X_{i-1}qX_iX_{i+1}\cdots X_n \vdash_M X_1X_2\cdots X_{i-2}pX_{i-1}Y\cdots X_n$
+		- 例外1：$i=1$时，$qX_1X_2\cdots X_n\vdash_M pBYX_2\cdots X_n$
+		- 例外2：$i=n$且$Y=B$时，$X_1X_2\cdots X_{n-1}qX_n\vdash_M X_1X_2\cdots X_{n-2}pX_{n-1}$
+	- 若有$\delta(q,X_i)=(p,Y,R)$，则$X_1X_2\cdots X_{i-1}qX_iX_{i+1}\cdots X_n \vdash_M X_1X_2\cdots X_{i-1}YpX_{i+1}\cdots X_n$
+		- 例外1：
+		- 例外2：
 # 图灵机的语言
+- 图灵机$M=(Q,\Sigma,\Gamma,\delta,q_0,B,F)$，其语言定义为：$L(M)=$图灵机接受的语言称为递归可枚举语言
