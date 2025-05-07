@@ -1,0 +1,38 @@
+# CFL的必要条件
+- 由于Chomsky范式(CNF)有良好的文法结构，采用CNF进行语言的分析
+- 推导：设CFG：$G=(V,T,S,P)$为CNF，且L为不含空串的无限CFL
+	- 对语法分析树，记$|V|=m,n=2^m$，对$z\in L$，若最大路径的长度为$m$，则$|z|\leq 2^{m-1}<n$![[Pasted image 20250507100710.png]]
+	- 反过来，如果$|z|\geq n=2^m$，则分析树的高度至少是$m+1$。从初始变量$S$开始的分析树最大路径为：$A_0A_1A_2\cdots A_ka$，则有$k\geq m$，但$|V|=m$，由鸽巢原理，其中一定有相同的变量，记为：$A_i=A_j(k-m\leq i<j\leq k)$
+	- 将分析树进行分割，z表示为$z=uvwxy$，其中w是根节点为$A_j$子树的产物，vwx是根节点$A_i$的产物，v和x分别位于串w的左右。由于没有单一产生式，故$vx\neq \epsilon$![[Pasted image 20250507102852.png]]
+
+# CFL的泵引理
+- 定理：设L是CFL，则存在常数$n$，对任意的$z\in L,|z|\geq n$，z可表示为$z=uvwxy$，且满足：$vx\neq \epsilon$；$|vwx|\leq n$；对任意$k\geq 0,uv^kwx^ky\in L$
+	- 证明：
+	- 应用，形式化为逻辑表示后，其否定型四用于判断一个语言不是CFL
+- 证明语言不是CFL：
+	1) 选取任意正整数n
+	2) 找字符串$z\in L$，使得：
+		1) $|z|\geq n$；
+		2) 对满足以下条件的任意的$u,v,w,x,y:z=uvwxy,vx\neq \epsilon,|vwx|\leq n$
+		3) 选择$k\geq 0$，使得$uv^kwx^ky\notin L$
+	- 例：
+		- ![[Pasted image 20250507101512.png]]
+		- ![[Pasted image 20250507101604.png]]
+# CFL的闭运算性质
+- 定理：**CFL的并是CFL**
+	- 证明：将变量集合加下标，相并，增加新的产生式：$S\rightarrow S_1|S_2$
+- 定理：**CFL的\*闭包与+闭包都是CFL**
+	- 证明：新的开始变量$S_1$，以及对应的产生式：$S_1\rightarrow SS_1|\epsilon$
+- 定理：**CFL的连接是CFL**
+	- 证明：将原语言的变量加下标区分，并增加新的初始变量$S$与对应的产生式：$S\rightarrow S_1S_2$
+- 定理：**CFL的反转仍是CFL**
+	- 证明：构造新的CFG：$G^R=(V,T,S,P^R)$，其中$P^R=\{A\rightarrow \alpha^R|A\rightarrow \alpha \in P\}$，证明对任意的$w$，都有$S \underset{G}{\stackrel{*}{  \Rightarrow}} w$对应于$S \underset{G_R}{\stackrel{*}{  \Rightarrow}} w^R$
+# CFL的同态性质
+- 定义：设$\Sigma$为字母表，$\mathscr L$为语言的集合，称映射$s:\Sigma\rightarrow \mathscr L$为$\Sigma$上的一个替换，也即对任意$a\in\Sigma$，$s(a)\in\mathscr L$为一个语言
+
+# CFL的交运算
+- CFL的交并不一定是CFL，因此其差、补等运算均不是封闭的
+- 定理：（**正则闭性质**）$L$为CFL，$R$为正则语言，则$L\cap R$为CFL
+	- 证明：
+	- 应用：
+		- ![[Pasted image 20250507105940.png]]![[Pasted image 20250507105946.png]]
