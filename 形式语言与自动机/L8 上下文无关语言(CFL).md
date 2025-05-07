@@ -40,8 +40,12 @@
 - CFL的交并不一定是CFL，因此其差、补等运算均不是封闭的
 - 定理：（**正则闭性质**）$L$为CFL，$R$为正则语言，则$L\cap R$为CFL
 	- 证明：构造对应的一个PDA：对DFA：$A=(Q_A,\Sigma,\delta_A,q_A,F_A)$，对PDA：$P=(Q_P,\Sigma,\Gamma,\delta_P,q_P,Z_0,F_P)$，新PDA：$P'=(Q_P\times Q_A,\Sigma,\Gamma,\delta,(q_p,q_A),Z_0,F_P\times F_A)$
+		- 转移函数满足：$\delta((q,p),a,X)$包含所有的状态-栈字符对$((r,s),\gamma)$：$(r,\gamma)\in\delta_P(q,a,X),s=\delta_A^*(p,a),a\in\Sigma\cup\epsilon$
+		- 直观来说，该自动机包含下列转移：
+			- ![[Pasted image 20250507164756.png]]![[Pasted image 20250507164803.png]]
 	- 应用：
 		- 证明语言是CFL：![[Pasted image 20250507105940.png]]![[Pasted image 20250507105946.png]]
+		- 反证法证明语言不是CFL
 # CFL的判定性质
 - 空语言问题：给定CFG，如何判定$L(G)=\emptyset$
 	- 算法：判定CFG的开始变量否是无用的
@@ -49,4 +53,10 @@
 	- 算法：消去单一产生式，$\epsilon$-产生式和无用符号，构造变量的依赖图，若有环，则语言是无限的
 	- 例：![[Pasted image 20250507110626.png]]
 - 语言元素问题：对给定CFG，如何判定$w\in L(G)$
-	- 算法：CYK解析算法
+	- 算法：CYK解析算法：设CFG：$G=(V,T,S,P)$为CNF，$w=a_1a_2\cdots a_n\in T^*$
+		- 迭代计算下列满足条件的变量符号$X_{ij}(1\leq i\leq j\leq n)$：$X_{ij}\in V,A\in X_{ij} \text{   iff  } A\underset{G}{\stackrel{*}{  \Rightarrow}} a_ia_{i+1}\cdots a_j$
+		- 判定：$w\in L(G)\text{ iff }S\in X_{1n}$
+		- 迭代计算如下：
+			- $j=i$，如果$A\rightarrow a_i\in P$，则$A\in X_{ii}$
+			- $j>i$，$A∈X_{ij}$当且仅当存在 $k:i\leq k<j$，可以找到$B∈X_{ik}$和$C∈X_{(k+1)j}$，使得：$A→BC∈P$
+		- 复杂度：$|w|=n$，复杂度为$O(n^3)$

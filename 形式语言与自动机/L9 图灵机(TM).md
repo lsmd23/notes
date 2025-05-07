@@ -28,7 +28,14 @@
 		- 例外1：$i=1$时，$qX_1X_2\cdots X_n\vdash_M pBYX_2\cdots X_n$
 		- 例外2：$i=n$且$Y=B$时，$X_1X_2\cdots X_{n-1}qX_n\vdash_M X_1X_2\cdots X_{n-2}pX_{n-1}$
 	- 若有$\delta(q,X_i)=(p,Y,R)$，则$X_1X_2\cdots X_{i-1}qX_iX_{i+1}\cdots X_n \vdash_M X_1X_2\cdots X_{i-1}YpX_{i+1}\cdots X_n$
-		- 例外1：
-		- 例外2：
+		- 例外1：$i=n$时，$X_1X_2\cdots X_{n-1}qX_n\vdash_M X_1X_2\cdots X_{n-1}YpB$
+		- 例外2：$i=1$且$Y=B$时，$qX_1X_2\cdots X_n\vdash_M pX_2\cdots X_{n-1}X_{n}$
+	- 定义推导关系的传递闭包为$\vdash_M^*$
 # 图灵机的语言
-- 图灵机$M=(Q,\Sigma,\Gamma,\delta,q_0,B,F)$，其语言定义为：$L(M)=$图灵机接受的语言称为递归可枚举语言
+- 图灵机$M=(Q,\Sigma,\Gamma,\delta,q_0,B,F)$，其语言定义为：$L(M)=\{w|w\in \Sigma^*,q_0w\vdash^*_M \alpha p\beta,p\in F,\alpha\in\Gamma^*,\beta\in\Gamma^+\}$
+	- 图灵机接受的语言称为递归可枚举语言
+	- 定理：任给图灵机$M$，容易构造一个图灵机$M’$，使得$L(M)=L(M')$，并满足：如果$w∈L(M)$，则对于$w$，$M'$接受$w$并一定停机
+		- 由此结论，如果没有特别指出，今后假定图灵机到达终态后一定停机
+	- 递归语言：称语言$L$是递归的，当且仅当存在图灵机$M$，$L=L(M)$，且满足：
+		- 若$w\in L(M)$，则对于$w$，$M$接受$w$，显然会停机
+		- 若$w\notin L(M)$，则对于$w$，$M$最终也会停机，但不能到达终态
