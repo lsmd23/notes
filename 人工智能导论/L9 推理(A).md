@@ -81,3 +81,6 @@
 	- 例：![[Pasted image 20250510170431.png]]![[Pasted image 20250510170436.png]]![[Pasted image 20250510170442.png]]
 	- 
 ## 
+
+---
+[[L10 推理(B)]]
