@@ -43,7 +43,7 @@
 ## D分离准则
 - 独立性：
 	- 两变量**边缘独立**，当且仅当$p_{XY}(x,y)=p_X(x)p_Y(y)$
-	- 两变量**条件独立**，当且仅当$p_{XY|Z}(x,y|z)=p()p()$或$p_{X|YZ}(x|y,z)=p_{X|Z}(x|z)$
+	- 两变量**条件独立**，当且仅当$p_{XY|Z}(x,y|z)=p_{X|Z}(x|z)p_{Y|Z}(y|z)$或$p_{X|YZ}(x|y,z)=p_{X|Z}(x|z)$
 - 贝叶斯网络中的独立性：考虑三个节点的情况
 	- 边缘独立：仅一种情况![[Pasted image 20250510164008.png]]
 		- 解释：$p(A,B)=\sum_C p(A,B,C)=\sum_C p(A)p(B)p(C|A,B)=p(A)p(B)\sum_C p(C|A,B)=p(A)p(B)$
