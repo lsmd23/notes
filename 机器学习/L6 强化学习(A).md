@@ -126,18 +126,22 @@
 		1. 给定任意的策略$\pi$
 		2. 评估策略：$$v_\pi(s)=\mathbb{E}_\pi[R_{t+1} + \gamma R_{t+2} + \cdots | S_t = s]$$
 		3. 采用贪心的方式改进策略：$$\pi'(s) = \text{greedy}(\pi)$$
+		4. 上述过程重复进行，直到策略不再改变
 	- 策略评估过程（Policy Evaluation）：
 		- 目标：计算确定MDP在给定策略$\pi$下的状态价值函数$v_\pi$
 		- 方法：通过迭代的方式，利用贝尔曼方程进行计算
 			- 在第$k+1$步迭代，对所有的状态$s\in \mathcal{S}$
 			- 从$v_k(s')$更新$v_{k+1}(s)$，其中$s'$是$s$的某个后继状态：$$v_{k+1}(s) = \sum_{a \in \mathcal{A}} \pi(a|s) \left[ \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_k(s') \right]$$
 			- 可以证明，这一过程会收敛到$v_\pi$，即$\lim_{k\to \infty} v_k = v_\pi$
-		- 策略改进过程（Policy Improvement）：
-			- 目标：考虑确定性策略$\pi(s)=a$，基于当前的状态价值函数$v_\pi$，生成一个新的策略$\pi'$
-			- 方法：贪心选择一步最优策略：$$\pi'(s) = \underset{a \in \mathcal{A}}{\text{argmax}} q_\pi(s,a)$$其中$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s')$$
+	- 策略改进过程（Policy Improvement）：
+		- 目标：考虑确定性策略$\pi(s)=a$，基于当前的状态价值函数$v_\pi$，生成一个新的策略$\pi'$
+		- 方法：贪心选择一步最优策略：$$\pi'(s) = \underset{a \in \mathcal{A}}{\text{argmax}} q_\pi(s,a)$$其中$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s')$$也即，根据计算好的$v_\pi$，选择一个动作$a$，使得$q_\pi(s,a)$最大
 			- 证明：
 				- 对状态$s$，有：$$q_\pi(s,\pi'(s)) = \max_{a\in \mathcal{A}}q_\pi(s,a)\geq q_\pi(s,\pi(s)) = v_\pi(s)$$
 				- 因此，有：$$\begin{align*} v_\pi(s) &\leq q_\pi(s, \pi'(s)) = \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma v_\pi(S_{t+1}) | S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma q_\pi(S_{t+1}, \pi'(S_{t+1})) | S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma R_{t+2} + \gamma^2 q_\pi(S_{t+2}, \pi'(S_{t+2})) |S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma R_{t+2} + \dots | S_t = s \big] = v_{\pi'}(s) \end{align*}$$
-
+				- 由此，我们证明了$v_{\pi'}(s) \geq v_\pi(s), \forall s \in \mathcal{S}$，也即$\pi' \geq \pi$，**贪心可以收敛到最优策略**
+	- 最优策略：
+		- 当迭代过程停止时，也即$q_\pi(s,\pi'(s)) = v_\pi(s), \forall s \in \mathcal{S}$，则说明策略$\pi$已经是最优策略$\pi_*$
+		- 此时满足贝尔曼方程$v_\pi(s) = \max_{a\in \mathcal{A}}q_\pi(s,a)$，与贝尔曼最优方程一致
 ---
 [[L7 强化学习(B)]]
