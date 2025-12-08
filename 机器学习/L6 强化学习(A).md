@@ -115,9 +115,29 @@
 	- 策略学习模型：例如[[L6 学习(C)#^72508b|人工智能导论——基于策略的学习]]
 	- 综合模型：例如[[L6 学习(C)#^c5d1f0|人工智能导论——演员评委模型]]
 # 规划求解MDP
-- [[L4 动态规划|算法分析与设计——动态规划]]
-- 
-
+- 动态规划：
+	- 算法基础：[[L4 动态规划|算法分析与设计——动态规划]]
+	- 对MDP问题，如果其完全已知（也即五元组$<\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma>$均已知），则可以通过动态规划的方法，利用贝尔曼方程进行迭代求解
+		- 预测问题：给定MDP和策略$\pi$，求解该策略下的状态价值函数$v_\pi$
+		- 控制问题：给定MDP，输出最优的策略$\pi_*$和最优的状态价值函数$v_*$
+- 策略迭代（Policy Iteration）：
+	- 问题：给定策略$\pi$和MDP，求解最优的策略$\pi_*$
+	- 定理：通过如下的迭代过程，总可以收敛到最优的策略$\pi_*$：
+		1. 给定任意的策略$\pi$
+		2. 评估策略：$$v_\pi(s)=\mathbb{E}_\pi[R_{t+1} + \gamma R_{t+2} + \cdots | S_t = s]$$
+		3. 采用贪心的方式改进策略：$$\pi'(s) = \text{greedy}(\pi)$$
+	- 策略评估过程（Policy Evaluation）：
+		- 目标：计算确定MDP在给定策略$\pi$下的状态价值函数$v_\pi$
+		- 方法：通过迭代的方式，利用贝尔曼方程进行计算
+			- 在第$k+1$步迭代，对所有的状态$s\in \mathcal{S}$
+			- 从$v_k(s')$更新$v_{k+1}(s)$，其中$s'$是$s$的某个后继状态：$$v_{k+1}(s) = \sum_{a \in \mathcal{A}} \pi(a|s) \left[ \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_k(s') \right]$$
+			- 可以证明，这一过程会收敛到$v_\pi$，即$\lim_{k\to \infty} v_k = v_\pi$
+		- 策略改进过程（Policy Improvement）：
+			- 目标：考虑确定性策略$\pi(s)=a$，基于当前的状态价值函数$v_\pi$，生成一个新的策略$\pi'$
+			- 方法：贪心选择一步最优策略：$$\pi'(s) = \underset{a \in \mathcal{A}}{\text{argmax}} q_\pi(s,a)$$其中$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s')$$
+			- 证明：
+				- 对状态$s$，有：$$q_\pi(s,\pi'(s)) = \max_{a\in \mathcal{A}}q_\pi(s,a)\geq q_\pi(s,\pi(s)) = v_\pi(s)$$
+				- 因此，有：$$\begin{align*} v_\pi(s) &\leq q_\pi(s, \pi'(s)) = \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma v_\pi(S_{t+1}) | S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma q_\pi(S_{t+1}, \pi'(S_{t+1})) | S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma R_{t+2} + \gamma^2 q_\pi(S_{t+2}, \pi'(S_{t+2})) |S_t = s \big] \\ &\leq \mathbb{E}_{\pi'} \big[ R_{t+1} + \gamma R_{t+2} + \dots | S_t = s \big] = v_{\pi'}(s) \end{align*}$$
 
 ---
 [[L7 强化学习(B)]]
