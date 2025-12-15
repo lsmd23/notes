@@ -23,7 +23,7 @@
 			- 更新回报函数估计值$G(s))\leftarrow G(s)+G_t$
 			- 估计的价值函数由均值计算得到：$$V(s)= \frac{G(s)}{N(s)}$$
 		2. 每次访问MC：对采样链中，每个采样的状态，都在线的更新其估计值
-			- 数学基础：均值可以写成如下的动态更新形式$$\mu_k = \frac{1}{k} \sum_{j=1}^k x_j = \frac{1}{k} \left( x_k + \sum_{j=1}^{k-1} x_j \right) = \frac{1}{k} \left( x_k + (k-1)\mu_{k-1} \right) \\ = \mu_{k-1} + \frac{1}{k} \left( x_k - \mu_{k-1} \right) = \mu_{k-1} + \alpha \left( x_k - \mu_{k-1} \right)$$
+			- 数学基础：均值可以写成如下的动态更新形式$$\mu_k = \frac{1}{k} \sum_{j=1}^k x_j = \frac{1}{k} \left( x_k + \sum_{j=1}^{k-1} x_j \right) = \frac{1}{k} \left( x_k + (k-1)\mu_{k-1} \right) \\ = \mu_{k-1} + \frac{1}{k} \left( x_k - \mu_{k-1} \right) = \mu_{k-1} + \alpha \left( x_k - \mu_{k-1} \right)$$ ^00d209
 			- 由此，可以得到在线的更新策略为：$V(S_t)\leftarrow V(S_t) + \alpha \left( G_t - V(S_t) \right)$，其中$\alpha$为学习率
 - 蒙特卡洛规划求解：
 	- 需要使用蒙特卡洛的方式，解决策略评估和策略改进两个过程的计算
@@ -46,60 +46,116 @@
 				- 根据$\epsilon$定义非确定策略：$$\pi(a|S_t) = \begin{cases} 1-\epsilon + \frac{\epsilon}{|\mathcal{A}(S_t)|}, & a = A^* \\ \frac{\epsilon}{|\mathcal{A}(S_t)|}, & a \neq A^* \end{cases}$$
 		- 数学保证：
 			- $\epsilon$-贪心策略提升定理：对任意的$\epsilon$-贪心策略$\pi$，进行一步策略改进后的策略$\pi'$，满足$v_{\pi'}(s) \geq v_\pi(s)$，即策略不会变差
-				- 证明：
-			- 
-
-
-
-
-
-
-
+				- 证明：$$\begin{align*} q_{\pi}(s, \pi'(s)) &= \sum_{a \in \mathcal{A}} \pi'(a|s) q_{\pi}(s, a) \\ &= \frac{\epsilon}{|\mathcal{A}|} \sum_{a \in \mathcal{A}} q_{\pi}(s, a) + (1-\epsilon) \max_{a \in \mathcal{A}} q_{\pi}(s, a) \\ &\geq \frac{\epsilon}{|\mathcal{A}|} \sum_{a \in \mathcal{A}} q_{\pi}(s, a) + (1-\epsilon) \sum_{a \in \mathcal{A}} \frac{\pi(a|s) - \frac{\epsilon}{|\mathcal{A}|}}{1-\epsilon} q_{\pi}(s, a) \\ &= \sum_{a \in \mathcal{A}} \pi(a|s) q_{\pi}(s, a) = v_{\pi}(s) \end{align*}$$
+			- 极限贪心与无限探索（Greedy in the Limit with Infinite Exploration, **GLIE**）：如果一个策略序列$\{\pi_k\}$满足以下两个条件，则称其为GLIE策略序列
+				1. 对于每个状态$s$和动作$a$，都有无限次的采样机会：$\lim_{t\to\infty} N_t(s,a) \to \infty$
+				2. 随着时间的推移，策略趋向于确定性贪心策略：$\lim_{k\to\infty} \pi_k(a|s) = \begin{cases} 1, & a = \arg\max_{a'} Q_k(s,a') \\ 0, & \text{otherwise} \end{cases}$
+				- 例：若取$\epsilon_k = \frac{1}{k}$，则$\epsilon$-贪心策略序列$\{\pi_k\}$为GLIE策略序列
+				- 定理：满足GLIE条件的蒙特卡洛控制算法，最终会收敛到最优策略$\pi^*$，即$\lim_{k\to\infty} Q_k(s,a) = q^*(s,a)$
 # 时间差分学习
 ## TD(0)学习
 - 基本思想：基于一步的交互估计价值函数
 	- 单步交互是在策略$\pi$下采样得到的四元组：$(S_t,A_t,R_{t+1},S_{t+1})$
 	- 价值函数可以由贝尔曼方程，转化为和一步交互有关的定义式：$$v(s) = \mathbb{E}[G_t|S_t=s] = \mathbb{E}[R_{t+1} + \gamma v(S_{t+1})|S_t=s]$$
-	- 因此，可以用
+	- 因此，可以用一步的自举式学习，对整个价值函数进行一个估计和更新
+		- 由于其只进行一步的采样，因此方差较小，但由于其依赖当前估计的价值函数，因此会产生偏差
+		- 在迭代过程中，TD(0)学习会逐渐减少这种偏差，从而最终收敛到真实的价值函数，也即这个估计是**渐进无偏的**
+	- 迭代核心：$$V(S_t)\leftarrow V(S_t) + \alpha \left( R_{t+1} + \gamma V(S_{t+1}) - V(S_t) \right)$$其中，$R_{t+1} + \gamma V(S_{t+1})$为当前的估计回报，也即TD目标，$R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$为TD误差
+		- 由推导过的[[L7 强化学习(B)#^00d209|平均值动态更新公式]]，可知这一更新过程同样可以收敛到状态价值函数$v(s)$
 - 实现：![[Pasted image 20251215155355.png]]
-	- 
+	- 初始化：随机的状态价值函数$V(s)$，对于终点状态$V(\text{terminal})=0$
+	- 对每个迭代，初始化某个状态$S$
+	- 对迭代的每步，根据策略$\pi$选择动作$A$，执行动作，观察奖励$R$和下一个状态$S'$
+	- 更新状态价值函数：$V(S)\leftarrow V(S) + \alpha ( R + \gamma V(S') - V(S) )$
+	- 状态转移：$S \leftarrow S'$
+	- 直到状态$S$为终止状态，结束该迭代，开始下一个迭代
 ## TD($\lambda$)学习
 - 基本思想：在方差和偏差之间权衡
-	- N步回报：
+	- 1步回报：也即进行一步交互后的回报估计：$G_t^{(1)} = R_{t+1} + \gamma V(S_{t+1})$，TD(0)学习的核心迭代
+	- $\infty$步回报：也即进行完整情节采样后的回报估计：$G_t^{(\infty)} = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + ... + \gamma^{T-t-1} R_T$，蒙特卡洛方法的核心迭代
+	- N步回报：介于1步和$\infty$步之间，进行N步交互后的回报估计：$$G_t^{(n)} = R_{t+1} + \gamma R_{t+2} + ... + \gamma^{n-1} R_{t+n} + \gamma^n V(S_{t+n})$$
+		- N步TD学习：基于N步回报的估计，进行价值函数的更新
+			- 迭代核心：$$V(S_t)\leftarrow V(S_t) + \alpha \left( G_t^{(n)} - V(S_t) \right)$$
 - 实现：![[Pasted image 20251215155401.png]]
-	- 
+	- 对每个迭代，初始化某个状态$S_0\neq \text{terminal}$，并初始化时间步$t=0$，终止时间$T=\infty$
+	- 对每个时间步$t=0,1,2,...$，执行以下操作
+		- 如果$t<T$，根据策略$\pi$选择动作$A_t$，执行动作，观察奖励$R_{t+1}$和下一个状态$S_{t+1}$
+			- 如果$S_{t+1}=\text{terminal}$，则令$T=t+1$
+		- 计算更新起始时间步：$\tau = t - n + 1$
+		- 如果$\tau \geq 0$，则计算N步回报：$$G_\tau = R_{\tau+1} + \gamma R_{\tau+2} + ... + \gamma^{n-1} R_{\tau+n} + \gamma^n V(S_{\tau+n})$$并更新状态价值函数：$$V(S_\tau) \leftarrow V(S_\tau) + \alpha ( G_\tau - V(S_\tau) )$$
+		- 如果$\tau = T-1$，则结束该迭代，开始下一个迭代
 - 优化：基于均摊思想的优化
-	- 问题：
+	- 问题：在N步TD学习中，需要等待N步之后，才能对某个状态进行更新，导致学习过程较慢；且对复杂的模型，模拟N步操作需要对整个模型进行N次交互，开销较大
 	- $\lambda-\text{Return}$（$\lambda$-回报）：前向视角
-		- 用均摊方法估计计算当前状态之后的多个时间步的回报
+		- 利用数学上**期望的等价性**，更换一个用于估计价值函数的回报，使其更好地将整个迭代在每一步均摊，且迭代后仍然收敛到真实的价值函数
+		- 采用几何级数展开，定义：$$G_t^\lambda = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} G_t^{(n)}$$其中，$\lambda \in [0,1]$为均摊因子
+			- 当$\lambda=0$时，$\lambda$-回报退化为1步回报
+			- 当$\lambda=1$时，$\lambda$-回报退化为$\infty$步回报
+			- 通过调整$\lambda$的值，可以在方差和偏差之间进行权衡
+		- 迭代核心：$$V(S_t)\leftarrow V(S_t) + \alpha \left( G_t^\lambda - V(S_t) \right)$$可以证明，这一迭代同样可以收敛到状态价值函数$v(s)$
 	- 资格迹（Eligibility Trace）：后向视角
-		- 通过记录过去的状态访问情况，来调整当前的价值函数估计
+		- 对$\lambda$-回报的均摊迭代的补充，需要考虑已经过去的时间步对当前价值函数更新的影响
+		- 定义：对于每个状态$s$，定义其资格迹$E_t(s)$为：$$E_t(s) = \begin{cases} \gamma \lambda E_{t-1}(s) + 1, & s = S_t \\ \gamma \lambda E_{t-1}(s), & s \neq S_t \end{cases}$$
+			- 即每当状态$s$被访问时，其资格迹增加1，否则其资格迹按比例$\gamma \lambda$衰减
 		- 数学保证：
+			- 对于N步回报，重新展开，可得：$$\begin{align*}G_t^{(n)} &= R_{t+1} + \gamma R_{t+2} + \dots + \gamma^{n-1} R_{t+n} + \gamma^n V(S_{t+n}) \\&= V(S_t) + \sum_{k=1}^n \gamma^{k-1} \left(R_{t+k} + \gamma V(S_{t+k}) - V(S_{t+k-1})\right)\end{align*}$$
+			- 代入$\lambda$-回报的定义，可得：$$\begin{align*}G_t^{\lambda} - V(S_t) &= (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} \left(G_t^{(n)} - V(S_t)\right) \\&= (1 - \lambda) \sum_{n=1}^{\infty} \lambda^{n-1} \sum_{k=1}^n \gamma^{k-1} \left(R_{t+k} + \gamma V(S_{t+k}) - V(S_{t+k-1})\right) \\&= (1 - \lambda) \sum_{k=1}^{\infty} \gamma^{k-1} \left(R_{t+k} + \gamma V(S_{t+k}) - V(S_{t+k-1})\right) \sum_{n=k}^{\infty} \lambda^{n-1} \\&= \sum_{k=1}^{\infty} \underbrace{(\gamma \lambda)^{k-1}}_{\text{Eligibility Trace}} \underbrace{\left(R_{t+k} + \gamma V(S_{t+k}) - V(S_{t+k-1})\right)}_{\text{TD error}}\end{align*}$$
 	- 优化后实现：![[Pasted image 20251215161638.png]]
+		- 初始化：额外初始化一个资格迹表$E(s)=0$，其他同TD(0)学习
+		- 对每步迭代：
+			- 采样动作$A\sim \pi(\cdot|S)$
+			- 执行动作，观察奖励$R$和下一个状态$S'$
+			- 计算TD误差：$\delta \leftarrow R + \gamma V(S') - V(S)$
+			- 更新资格迹：$E(S) \leftarrow E(S) + 1$
+			- 对每个状态，基于$\lambda$-回报更新价值函数和资格迹：
+				- $V(s) \leftarrow V(s) + \alpha \delta E(s)$
+				- $E(s) \leftarrow \gamma \lambda E(s)$
+			- 状态转移：$S \leftarrow S'$，直到状态$S$为终止状态，结束该迭代，开始下一个迭代
 ## Sarsa算法
 - 基本思想：将时间差分学习中的状态价值函数扩展到状态动作价值函数，并使用$\epsilon$-贪心策略进行学习，即可得到Sarsa算法
 	- 单步Sarsa交互是在策略$\pi$下采样得到的五元组：$(S_t,A_t,R_{t+1},S_{t+1},A_{t+1})$
-	- 由其推导出的贝尔曼方程具有相同的形式，因此可以使用类似的时间差分方法进行学习
+	- 由其推导出的贝尔曼方程具有相同的形式，因此可以使用类似的时间差分方法进行学习：$$Q(S,A)\leftarrow Q(S,A) + \alpha [ R + \gamma Q(S',A') - Q(S,A) ]$$
 - 实现：![[Pasted image 20251215162719.png]]
+	- 初始化：随机的状态动作价值函数$Q(s,a)$，对于终点状态$Q(\text{terminal},\cdot)=0$
+	- 对每个迭代，初始化某个状态$S$，并根据策略$\pi$选择动作$A$
+	- 对迭代的每步，执行动作$A$，观察奖励$R$和下一个状态$S'$
+	- 根据策略$\pi$选择下一个动作$A'$
+	- 更新状态动作价值函数：$Q(S,A)\leftarrow Q(S,A) + \alpha ( R + \gamma Q(S',A') - Q(S,A) )$
+	- 状态转移：$S \leftarrow S'$，动作转移：$A \leftarrow A'$
+	- 直到状态$S$为终止状态，结束该迭代，开始下一个迭代
 - 均摊N步Sarsa算法
-	- 基本思想：将Sarsa算法扩展到N步的采样交互
+	- 基本思想：将Sarsa算法扩展到N步的采样交互：$$Q(S_t,A_t)\leftarrow Q(S_t,A_t) + \alpha ( q_t^{(n)} - Q(S_t,A_t) )$$其中，N步回报为：$$q_t^{(n)} = R_{t+1} + \gamma R_{t+2} + ... + \gamma^{n-1} R_{t+n} + \gamma^n Q(S_{t+n},A_{t+n})$$
 	- 均摊优化：
 		- $\text{Sarsa}(\lambda)$算法：结合资格迹的思想，对N步Sarsa进行均摊优化
 			- $\lambda$-回报的计算：前向视角
+				- 定义：$$q_t^\lambda = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} q_t^{(n)}$$
+				- 迭代核心：$$Q(S_t,A_t)\leftarrow Q(S_t,A_t) + \alpha ( q_t^\lambda - Q(S_t,A_t) )$$
+				- 可以证明，这一迭代同样可以收敛到状态动作价值函数$q_\pi(s,a)$
 			- 资格迹的计算：后向视角
+				- 定义：对于每个状态动作对$(s,a)$，定义其资格迹$E_t(s,a)$为：$$E_t(s,a) = \begin{cases} \gamma \lambda E_{t-1}(s,a) + 1, & s = S_t, a = A_t \\ \gamma \lambda E_{t-1}(s,a), & \text{otherwise} \end{cases}$$
+				- 引入资格迹后的迭代：$$\delta_t = R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t,A_t) $$ $$ Q(s,a) \leftarrow Q(s,a) + \alpha \delta_t E_t(s,a) $$
 		- 实现：![[Pasted image 20251215163128.png]]
-
-
+			- 不同点在于，初始化和更新资格迹表$E(s,a)$，以及计算TD误差$\delta$时，均基于状态动作对$(s,a)$进行
 ## Q-学习
 - 基本思想：异策略的（Off-policy）学习
 	- 概述：借用另一个智能体的策略$\mu$，来学习目标策略$\pi$的价值函数。如果另一个策略本身已经是一个较好的策略，则可以更快地学习到目标策略
 	- 对单步贝尔曼方程的$Q$迭代：$$Q(S_t,A_t)\leftarrow Q(S_t,A_t) + \alpha ( R_{t+1} + \gamma  Q(S_{t+1},A') - Q(S_t,A_t) )$$此时，虽然状态动作价值函数$Q(S_t,A_t)$和瞬时奖励$R_{t+1}$是由行为策略$\mu$采样得到的，但后续的动作$A'$是由目标策略$\pi$选择的
-	- 一般，目标策略$\pi$是一个贪心的策略：$$\begin{align*}\pi(S_{t+1})= \arg\max_{a'} Q(S_{t+1},a') \\ R_{t+1} + \gamma  Q(S_{t+1},A') = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a') \end{align*}$$而行为策略$\mu$是一个$\epsilon$-贪心策略
+	- 一般，目标策略$\pi$是一个贪心的策略：$$\pi(S_{t+1})= \arg\max_{a'} Q(S_{t+1},a') $$$$ R_{t+1} + \gamma  Q(S_{t+1},A') = R_{t+1} + \gamma \max_{a'} Q(S_{t+1},a') $$而行为策略$\mu$是一个$\epsilon$-贪心策略：$$\mu(a|S_t) = \begin{cases} 1-\epsilon + \frac{\epsilon}{|\mathcal{A}(S_t)|}, & a = \arg\max_{a'} Q(S_t,a') \\ \frac{\epsilon}{|\mathcal{A}(S_t)|}, & a \neq \arg\max_{a'} Q(S_t,a') \end{cases}$$
 - 实现：![[Pasted image 20251215164009.png]]
+	- 初始化：随机的状态动作价值函数$Q(s,a)$，对于终点状态$Q(\text{terminal},\cdot)=0$
+	- 对每个迭代，初始化某个状态$S$
+	- 对迭代的每步，根据行为策略$\mu$选择动作$A$
+	- 执行动作，观察奖励$R$和下一个状态$S'$
+	- 进行更新：$Q(S,A)\leftarrow Q(S,A) + \alpha ( R + \gamma \max_{a} Q(S',a) - Q(S,A) )$，即使用目标策略选择的动作
+	- 状态转移：$S \leftarrow S'$，直到状态$S$为终止状态，结束该迭代，开始下一个迭代
 - 问题：Q-学习容易产生过高的估计问题
+	- 原因：在更新过程中，使用了最大化操作$\max_{a'} Q(S_{t+1},a')$，这会导致对价值函数的高估
+## *随机近似定理*
+- 强化学习的优化理论保证
+- 内容：对于有限MDP过程，对于所有的状态$s\in \mathcal{S}$和动作$a\in \mathcal{A}$，如果满足以下条件学习率$\alpha_t(s,a)$满足：$$\sum_{t=1}^\infty \alpha_t(s,a) = \infty, \quad \sum_{t=1}^\infty \alpha_t^2(s,a) < \infty$$则Q学习以及Sarsa算法，均能以概率1收敛到最优状态动作价值函数$q^*(s,a)$
 # 价值函数近似
 - 问题：在状态空间和动作空间过大的情况下，无法使用表格的方式存储和更新价值函数，如果推理的过程依赖于表格的未被采样到的状态动作对，则无法进行泛化
 - 解决：使用函数近似的方法，借助一个监督学习的学习器，来近似表示和更新价值函数
-	- 
+	- 使用参数化模型，以估计值$\hat{v}(s,\pmb w) \approx v_\pi(s)$或$\hat{q}(s,a,\pmb w) \approx q_\pi(s,a)$，其中，$\pmb w$为模型的参数
 - **经验回放**：利用历史采样数据，进行离线的批量训练
 - 深度Q-学习：![[Pasted image 20251215170010.png]]
