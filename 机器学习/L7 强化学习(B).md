@@ -157,5 +157,19 @@
 - 问题：在状态空间和动作空间过大的情况下，无法使用表格的方式存储和更新价值函数，如果推理的过程依赖于表格的未被采样到的状态动作对，则无法进行泛化
 - 解决：使用函数近似的方法，借助一个监督学习的学习器，来近似表示和更新价值函数
 	- 使用参数化模型，以估计值$\hat{v}(s,\pmb w) \approx v_\pi(s)$或$\hat{q}(s,a,\pmb w) \approx q_\pi(s,a)$，其中，$\pmb w$为模型的参数
+	- 优化目标为均方误差损失：$$J(\pmb w) = \mathbb{E}_\pi \left[ \left(v_\pi(s) - \hat{v}(S,\pmb w) \right)^2 \right]$$
+	- 求梯度：$$\Delta\pmb w=-\frac{1}{2}\nabla_{\pmb w} J(\pmb w) = \alpha\mathbb{E}_\pi \left[ (v_\pi(S)-\hat{v}(S,\pmb w)) \nabla_{\pmb w} \hat{v}(S,\pmb w) \right]$$随机梯度下降用采样的方式逼近均值：$$\Delta\pmb w = \alpha ( v_\pi(s) - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
+- 价值函数近似的应用：
+	- 在预测过程中：
+		- 对蒙特卡洛方法：$$\Delta\pmb w = \alpha ( G_t - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$其中，$G_t$为采样得到的回报
+		- 对TD(0)学习：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w) - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
+			- 注意这里虽然优化目标也是$\pmb w$的梯度，但为确保收敛性，TD目标$R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w)$不对$\pmb w$求导
+		- 对前向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha ( G_t^\lambda - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
+		- 对后向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w) - \hat{v}(S_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
+	- 在控制过程中：
+		- 对蒙特卡洛控制：$$\Delta\pmb w = \alpha ( G_t - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
+		- 对TD(0)控制的Sarsa算法：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
+		- 对前向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha ( q_t^\lambda - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
+		- 对后向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 - **经验回放**：利用历史采样数据，进行离线的批量训练
 - 深度Q-学习：![[Pasted image 20251215170010.png]]
