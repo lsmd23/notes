@@ -158,7 +158,7 @@
 - 解决：使用函数近似的方法，借助一个监督学习的学习器，来近似表示和更新价值函数
 	- 使用参数化模型，以估计值$\hat{v}(s,\pmb w) \approx v_\pi(s)$或$\hat{q}(s,a,\pmb w) \approx q_\pi(s,a)$，其中，$\pmb w$为模型的参数
 	- 优化目标为均方误差损失：$$J(\pmb w) = \mathbb{E}_\pi \left[ \left(v_\pi(s) - \hat{v}(S,\pmb w) \right)^2 \right]$$
-	- 求梯度：$$\Delta\pmb w=-\frac{1}{2}\nabla_{\pmb w} J(\pmb w) = \alpha\mathbb{E}_\pi \left[ (v_\pi(S)-\hat{v}(S,\pmb w)) \nabla_{\pmb w} \hat{v}(S,\pmb w) \right]$$随机梯度下降用采样的方式逼近均值：$$\Delta\pmb w = \alpha ( v_\pi(s) - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
+	- 求梯度：$$\Delta\pmb w=-\frac{1}{2}\nabla_{\pmb w} J(\pmb w) = \alpha\mathbb{E}_\pi \left[ (v_\pi(S)-\hat{v}(S,\pmb w)) \nabla_{\pmb w} \hat{v}(S,\pmb w) \right]$$随机梯度下降用采样的方式逼近均值：$$\Delta\pmb w = \alpha ( v_\pi(s) - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$这里$v_\pi(s)$相当于采样得到的目标值，在统计意义上是无偏的
 - 价值函数近似的应用：
 	- 对于基于状态价值函数$v(s)$的评估过程：
 		- 对蒙特卡洛方法：$$\Delta\pmb w = \alpha ( G_t - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$其中，$G_t$为采样得到的回报
@@ -172,4 +172,17 @@
 		- 对前向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha ( q_t^\lambda - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 		- 对后向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 - **经验回放**：利用历史采样数据，进行离线的批量训练
+	- 保存以前的状态/价值对，形成经验回放池：$$\mathcal{D} =\{<s_1,v_1^\pi>,<s_2,v_2^\pi>,...,<s_T,v_T^\pi>\}$$
+	- 由于随机梯度下降在统计意义上的无偏性，从经验回放池中，取出一个$v_i^\pi$，作为目标值，进行训练，也可以在最终迭代出正确的价值函数进而得到最优策略
+	- 因此，在使用经验回放的学习中，从回放池$\mathcal{D}$中，随机采样一个数据：$$<s,v^\pi> \sim \mathcal{D}$$然后进行梯度更新：$$\Delta\pmb w = \alpha ( v^\pi - \hat{v}(s,\pmb w) ) \nabla_{\pmb w} \hat{v}(s,\pmb w) $$
 - 深度Q-学习：![[Pasted image 20251215170010.png]]
+	- 说明：
+		- 基于$\epsilon$-贪心策略，选择一个$a_t$
+		- 执行动作，观察奖励$r_{t+1}$和下一个状态$s_{t+1}$，获取四元组$(s_t,a_t,r_{t+1},s_{t+1})$，并存储到经验回放池$\mathcal{D}$中
+		- 从经验回放池$\mathcal{D}$中，随机采样一个小批量的四元组：$<s,a,r',s'> \sim \mathcal{D}$
+		- 计算Q-学习的目标网络建模参数$w^-$，该参数来自于迭代前的某个时间点
+		- 按下列规则最优化均方损失：$$\mathcal{L}(\pmb w) = \mathbb{E}_{<s,a,r',s'>\sim \mathcal{D}} \left[ \left( r' + \gamma \max_{a'} Q(s',a';\pmb w^-) - Q(s,a;\pmb w) \right)^2 \right] $$
+	- 原因：
+		- 经验回放：打破数据之间的相关性，通过采样一组小样本而不是使用单个样本进行迭代，提高数据利用率，减少方差
+		- 解决Q-学习过高估计的问题：使用网络参数$\pmb w^-$，来计算TD目标；利用过去的一组参数，在不断梯度提升的过程中，适度缓解使用最优化目标带来的过高估计问题，使得学习过程更加稳定，更加“无偏“
+		- 因此，DQN也是第一个成功应用于复杂问题的强化学习算法
