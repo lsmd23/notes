@@ -166,9 +166,9 @@
 			- 注意这里虽然优化目标也是$\pmb w$的梯度，但为确保收敛性，TD目标$R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w)$不对$\pmb w$求导
 		- 对前向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha ( G_t^\lambda - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
 		- 对后向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w) - \hat{v}(S_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
-	- 对于基于状态动作价值函数$q(s,a)$的评估过程： ^35f0e4
+	- 对于基于状态动作价值函数$q(s,a)$的评估过程：
 		- 对蒙特卡洛控制：$$\Delta\pmb w = \alpha ( G_t - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
-		- 对TD(0)控制的Sarsa算法：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
+		- 对TD(0)控制的Sarsa算法：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$ ^6ef538
 		- 对前向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha ( q_t^\lambda - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 		- 对后向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 - **经验回放**：利用历史采样数据，进行离线的批量训练

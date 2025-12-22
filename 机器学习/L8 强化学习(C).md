@@ -43,11 +43,27 @@
 - 兼容函数近似定理：
 - 单步演员-评委算法：从TD(0)算法得到
 	- 实现：![[Pasted image 20251222161230.png]]
-		- 参考[[L7 强化学习(B)#^35f0e4]]
+		- 参考[[L7 强化学习(B)#^6ef538|TD(0)算法的参数化更新]]
 - 引入资格迹的演员-评委算法：从TD(λ)算法得到
-	- 实现：![[Pasted image 20251222161512.png]]
-		- 参考[[L7 强化学习(B)#^d3f5e2]]
+	- 实现：![[Pasted image 20251222162143.png]]
+		- 参考[[L7 强化学习(B)]]
+- 
 
 
 
-# 强化学习的应用
+# 强化学习的最新应用
+## 近端策略优化(PPO)
+- 背景：传统的策略梯度方法在更新策略时，可能会导致策略发生剧烈变化，从而影响学习的稳定性和收敛性
+- **替代损失**：用于替换传统的策略梯度定理
+	- 用累计回报的期望定义性能指标：$$J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_\theta}G(\tau)$$
+	- 重要性采样转换：将其用另一个策略$\pi_{\theta'}$下的轨迹分布表示：$$J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_{\theta'}}\left[\frac{\mathbb{P}(\tau|\pi_\theta)}{\mathbb{P}(\tau|\pi_{\theta'})}G(\tau)\right]$$
+- 置信域策略优化(TRPO)：
+	- 
+
+- 近端策略优化(PPO)：
+	- 引入自适应
+	- 剪切概率比的替代损失函数：$$L^{CLIP}(\pmb \theta)=\mathbb{E}_t\left[\min\left(r_t(\pmb \theta)\hat A_t, \text{clip}(r_t(\pmb \theta),1-\epsilon,1+\epsilon)\hat A_t\right)\right]$$
+		- 这里$r_t(\pmb \theta)=\frac{\pi(A_t|S_t;\pmb \theta)}{\pi(A_t|S_t;\pmb \theta_{old})}$为新旧策略的概率比，$\hat A_t$为优势函数的估计，$\epsilon$为一个小的超参数
+	- 优化：使用随机梯度上升的方法对该损失函数进行优化
+- 组相对策略优化(GRPO)：
+	- 问题：使用参数化模型
