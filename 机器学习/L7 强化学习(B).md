@@ -170,7 +170,7 @@
 		- 对蒙特卡洛控制：$$\Delta\pmb w = \alpha ( G_t - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 		- 对TD(0)控制的Sarsa算法：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$ ^6ef538
 		- 对前向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha ( q_t^\lambda - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
-		- 对后向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
+		- 对后向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$ ^0149b2
 - **经验回放**：利用历史采样数据，进行离线的批量训练
 	- 保存以前的状态/价值对，形成经验回放池：$$\mathcal{D} =\{<s_1,v_1^\pi>,<s_2,v_2^\pi>,...,<s_T,v_T^\pi>\}$$
 	- 由于随机梯度下降在统计意义上的无偏性，从经验回放池中，取出一个$v_i^\pi$，作为目标值，进行训练，也可以在最终迭代出正确的价值函数进而得到最优策略
