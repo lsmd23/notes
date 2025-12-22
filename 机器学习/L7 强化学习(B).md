@@ -155,7 +155,7 @@
 - 内容：对于有限MDP过程，对于所有的状态$s\in \mathcal{S}$和动作$a\in \mathcal{A}$，如果满足以下条件学习率$\alpha_t(s,a)$满足：$$\sum_{t=1}^\infty \alpha_t(s,a) = \infty, \quad \sum_{t=1}^\infty \alpha_t^2(s,a) < \infty$$则Q学习以及Sarsa算法，均能以概率1收敛到最优状态动作价值函数$q^*(s,a)$
 # 价值函数近似
 - 问题：在状态空间和动作空间过大的情况下，无法使用表格的方式存储和更新价值函数，如果推理的过程依赖于表格的未被采样到的状态动作对，则无法进行泛化
-- 解决：使用函数近似的方法，借助一个监督学习的学习器，来近似表示和更新价值函数
+- 解决：使用函数近似的方法，借助一个监督学习的学习器，来近似表示和更新价值函数 ^2fcb18
 	- 使用参数化模型，以估计值$\hat{v}(s,\pmb w) \approx v_\pi(s)$或$\hat{q}(s,a,\pmb w) \approx q_\pi(s,a)$，其中，$\pmb w$为模型的参数
 	- 优化目标为均方误差损失：$$J(\pmb w) = \mathbb{E}_\pi \left[ \left(v_\pi(s) - \hat{v}(S,\pmb w) \right)^2 \right]$$
 	- 求梯度：$$\Delta\pmb w=-\frac{1}{2}\nabla_{\pmb w} J(\pmb w) = \alpha\mathbb{E}_\pi \left[ (v_\pi(S)-\hat{v}(S,\pmb w)) \nabla_{\pmb w} \hat{v}(S,\pmb w) \right]$$随机梯度下降用采样的方式逼近均值：$$\Delta\pmb w = \alpha ( v_\pi(s) - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$这里$v_\pi(s)$相当于采样得到的目标值，在统计意义上是无偏的
@@ -166,7 +166,7 @@
 			- 注意这里虽然优化目标也是$\pmb w$的梯度，但为确保收敛性，TD目标$R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w)$不对$\pmb w$求导
 		- 对前向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha ( G_t^\lambda - \hat{v}(S_t,\pmb w) ) \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
 		- 对后向视角的TD($\lambda$)学习：$$\Delta\pmb w = \alpha \delta_t E_t$$其中：$$\delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1},\pmb w) - \hat{v}(S_t,\pmb w)$$$$E_t = \gamma \lambda E_{t-1} + \nabla_{\pmb w} \hat{v}(S_t,\pmb w) $$
-	- 对于基于状态动作价值函数$q(s,a)$的评估过程：
+	- 对于基于状态动作价值函数$q(s,a)$的评估过程： ^35f0e4
 		- 对蒙特卡洛控制：$$\Delta\pmb w = \alpha ( G_t - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 		- 对TD(0)控制的Sarsa算法：$$\Delta\pmb w = \alpha ( R_{t+1} + \gamma \hat{q}(S_{t+1},A_{t+1},\pmb w) - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
 		- 对前向视角的Sarsa($\lambda$)算法：$$\Delta\pmb w = \alpha ( q_t^\lambda - \hat{q}(S_t,A_t,\pmb w) ) \nabla_{\pmb w} \hat{q}(S_t,A_t,\pmb w) $$
@@ -186,3 +186,5 @@
 		- 经验回放：打破数据之间的相关性，通过采样一组小样本而不是使用单个样本进行迭代，提高数据利用率，减少方差
 		- 解决Q-学习过高估计的问题：使用网络参数$\pmb w^-$，来计算TD目标；利用过去的一组参数，在不断梯度提升的过程中，适度缓解使用最优化目标带来的过高估计问题，使得学习过程更加稳定，更加“无偏“
 		- 因此，DQN也是第一个成功应用于复杂问题的强化学习算法
+---
+[[L8 强化学习(C)]]
