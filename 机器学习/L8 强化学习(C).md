@@ -59,23 +59,36 @@
 - 引入资格迹的演员-评委算法：从TD(λ)算法得到
 	- 实现：![[Pasted image 20251222162143.png]]
 		- 参考[[L7 强化学习(B)#^0149b2|Sarsa(λ)算法的参数化更新]]
-- 
-
-
-
+- 扩展算法：同理，可以用不同的估计，代替策略梯度中的价值函数项，从而得到不同的策略梯度学习算法：$$\begin{align*}\nabla_{\boldsymbol{\theta}} J(\boldsymbol{\theta}) &\propto \mathbb{E}_{\pi_{\boldsymbol{\theta}}}\left[\nabla_{\boldsymbol{\theta}} \log \pi_{\boldsymbol{\theta}}(S_t, A_t) \, G_t\right]\\ &\propto \mathbb{E}_{\pi_{\boldsymbol{\theta}}}\left[\nabla_{\boldsymbol{\theta}} \log \pi_{\boldsymbol{\theta}}(S_t, A_t) \, \hat{q}(S_t, A_t, \boldsymbol{w})\right] \\ &\propto \mathbb{E}_{\pi_{\boldsymbol{\theta}}}\left[\nabla_{\boldsymbol{\theta}} \log \pi_{\boldsymbol{\theta}}(S_t, A_t) \, \hat{A}(S_t, A_t, \boldsymbol{w})\right] \quad \\ &\propto \mathbb{E}_{\pi_{\boldsymbol{\theta}}}\left[\nabla_{\boldsymbol{\theta}} \log \pi_{\boldsymbol{\theta}}(S_t, A_t) \, \delta\right]  \\ &\propto \mathbb{E}_{\pi_{\boldsymbol{\theta}}}\left[\nabla_{\boldsymbol{\theta}} \log \pi_{\boldsymbol{\theta}}(S_t, A_t) \, \delta e\right] \quad \end{align*}$$
+	- 从上到下依次对应：REINFORCE算法，演员评委算法，优势函数演员评委算法，单步TD演员评委算法，资格迹演员评委算法
 # 强化学习的最新应用
 ## 近端策略优化(PPO)
 - 背景：传统的策略梯度方法在更新策略时，可能会导致策略发生剧烈变化，从而影响学习的稳定性和收敛性
 - **替代损失**：用于替换传统的策略梯度定理
 	- 用累计回报的期望定义性能指标：$$J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_\theta}G(\tau)$$
-	- 重要性采样转换：将其用另一个策略$\pi_{\theta'}$下的轨迹分布表示：$$J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_{\theta'}}\left[\frac{\mathbb{P}(\tau|\pi_\theta)}{\mathbb{P}(\tau|\pi_{\theta'})}G(\tau)\right]$$
+	- **重要性采样转换**：将其用另一个策略$\pi_{\theta'}$下的轨迹分布表示：$$J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_{\theta'}}\left[\frac{\mathbb{P}(\tau|\pi_\theta)}{\mathbb{P}(\tau|\pi_{\theta'})}G(\tau)\right]$$
+	- 转换后的梯度：$$\nabla_{\pmb \theta} J(\pmb \theta)=\mathbb{E}_{\tau\sim\pi_{\theta'}}\left[\frac{\nabla_{\pmb \theta}\mathbb{P}(\tau|\pi_{\pmb\theta})}{\mathbb{P}(\tau|\pi_{\pmb\theta'})}G(\tau)\right]$$令$\pmb \theta = \pmb \theta'$，则有：$$\begin{align*}\left. \nabla_{\boldsymbol{\theta}} J(\boldsymbol{\theta}) \right|_{\boldsymbol{\theta}=\boldsymbol{\theta}'} &= \mathbb{E}_{\tau \sim \pi_{\boldsymbol{\theta}'}} \frac{\left. \nabla_{\boldsymbol{\theta}} \mathbb{P}(\tau|\pi_{\boldsymbol{\theta}}) \right|_{\boldsymbol{\theta}'}}{\mathbb{P}(\tau|\pi_{\boldsymbol{\theta}'})} G(\tau)\\&=\mathbb{E}_{\tau \sim \pi_{\boldsymbol{\theta}'}} \left. \nabla_{\boldsymbol{\theta}} \log \mathbb{P}(\tau|\pi_{\boldsymbol{\theta}}) \right|_{\boldsymbol{\theta}'} G(\tau) \end{align*}$$
 - 置信域策略优化(TRPO)：
-	- 
-
+	- 为了解决策略更新过大的问题，需要限制每次更新的幅度，因此，划定一个置信域限制算法的更新：$$||\pmb \theta_{\text{new}}-\pmb \theta_{\textrm{old}}||_2\leq \Delta$$
+	- TRPO算法：
+		- 估计性能指标：使用旧的$\pmb \theta_{\textrm{old}}$，构建一个函数$L(\pmb\theta|\pmb \theta_{\text{old}})$，用于在$\pmb \theta_{\textrm{old}}$的邻域内估计新的性能指标
+		- 在置信域内，进行优化：$$\pmb \theta_{\text{new}}\leftarrow \arg \max_{\pmb \theta} L(\pmb\theta|\pmb \theta_{\text{old}})\text{ s.t. } \pmb \theta \in \mathcal{N}(\pmb \theta_{\text{old}})$$
+		- 具体优化问题：$$\begin{align*}&\max_{\boldsymbol{\theta}} L(\boldsymbol{\theta}|\boldsymbol{\theta}_{\text{old}}) = \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)} A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s, a) \right] \\ &\text{s.t. } \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \text{KL}\left(\pi_{\boldsymbol{\theta}}(\cdot|s) \| \pi_{\boldsymbol{\theta}_{\text{old}}}(\cdot|s)\right) \right] \leq \Delta\end{align*}$$
 - 近端策略优化(PPO)：
-	- 引入自适应
-	- 剪切概率比的替代损失函数：$$L^{CLIP}(\pmb \theta)=\mathbb{E}_t\left[\min\left(r_t(\pmb \theta)\hat A_t, \text{clip}(r_t(\pmb \theta),1-\epsilon,1+\epsilon)\hat A_t\right)\right]$$
-		- 这里$r_t(\pmb \theta)=\frac{\pi(A_t|S_t;\pmb \theta)}{\pi(A_t|S_t;\pmb \theta_{old})}$为新旧策略的概率比，$\hat A_t$为优势函数的估计，$\epsilon$为一个小的超参数
-	- 优化：使用随机梯度上升的方法对该损失函数进行优化
+	- 使用拉格朗日乘子法进行上述带约束优化问题的求解$$\max_{\boldsymbol{\theta}} L(\boldsymbol{\theta}|\boldsymbol{\theta}_{\text{old}}) = \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)} A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s, a) \right] - \beta \left( \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \text{KL}(\pi_{\boldsymbol{\theta}} \| \pi_{\boldsymbol{\theta}_{\text{old}}}) \right] \right)$$
+	- **自适应调整**：根据实际的KL散度调整$\beta$的值，以控制每次更新的幅度（$\beta$越大，意味着约束越强，也即更新幅度越小）
+	- **目标裁剪**：
+		- 数学证明给出，对重要性采样转换的结果，其函数方差和采样的比例平方成正比：$$\text{Var}(L(\pmb \theta|\pmb \theta_{\text{old}}))\propto \left(\frac{\pi_{\pmb \theta}(a|s)}{\pi_{\pmb \theta_{\text{old}}}(a|s)}\right)^2$$
+		- 为控制方差，可以适度引入偏差，对其进行裁剪
+			- 当$A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s, a)>0$时，需要裁剪过大的数值
+			- 当$A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s, a)<0$时，需要裁剪过小的数值
+			- 示意图：![[Pasted image 20251222232042.png]]
+	- 优势函数与惩罚：
+		- PPO通过优势函数更新策略，以减小方差
+		- 实际训练中，常将KL散度直接作为惩罚项加入到训练的函数中进行迭代
+		- 最终函数：$$L(\boldsymbol{\theta}|\boldsymbol{\theta}_{\text{old}}) = \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \min\left\{ \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)} A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s,a), \right. \right. \\ \left. \left. \text{clip}\left( \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)}, 1-\epsilon, 1+\epsilon \right) A_{\pi_{\boldsymbol{\theta}_{\text{old}}}}(s,a) \right\} - \beta \left[ \text{KL}(\pi_{\boldsymbol{\theta}} \| \pi_{\boldsymbol{\theta}_{\text{old}}}) \right] \right]$$
 - 组相对策略优化(GRPO)：
-	- 问题：使用参数化模型
+	- 问题：优势函数的计算需要两个参数化的模型，训练成本很高
+	- 优化：回归简单的蒙特卡洛方法，使用采样的方式，进行优势函数的计算
+		- 优势函数的采样估计：$$\hat{A}_i = \frac{r_i - \text{mean}(\{r_i\}_{i=1}^G)}{\text{std}(\{r_i\}_{i=1}^G)}$$
+		- 损失函数形式：$$L(\boldsymbol{\theta}|\boldsymbol{\theta}_{\text{old}}) = \mathbb{E}_{\pi_{\boldsymbol{\theta}_{\text{old}}}} \left[ \min\left\{ \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)} \hat{A}_i, \, \text{clip}\left( \frac{\pi_{\boldsymbol{\theta}}(a|s)}{\pi_{\boldsymbol{\theta}_{\text{old}}}(a|s)}, 1-\epsilon, 1+\epsilon \right) \hat{A}_i \right\} - \beta [\text{KL}(\pi_{\boldsymbol{\theta}} \| \pi_{\boldsymbol{\theta}_{\text{old}}})] \right]$$
