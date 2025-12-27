@@ -85,7 +85,7 @@
 	- 动作价值函数（Action Value Function）：$$q_\pi(s,a) = \mathbb{E}_\pi[G_t | S_t = s, A_t = a]$$表示在状态$s$下，智能体采取动作$a$后，按照策略$\pi$未来所能获得的期望累积奖励
 	- 贝尔曼方程（Bellman Equation）： ^e54a68
 		- 将两个函数分别展开，可得：$$v_{\pi}(s) = \mathbb{E}_{\pi}[R_{t+1} + \gamma v_{\pi}(S_{t+1}) | S_t = s] \tag{1}$$$$q_{\pi}(s,a) = \mathbb{E}_{\pi}[R_{t+1} + \gamma q_{\pi}(S_{t+1}, A_{t+1}) | S_t = s, A_t = a]\tag{2}$$
-		- 对价值函数进行概率展开：$$v_\pi(s) = \sum_{a \in \mathcal{A}} \pi(a|s) Q_\pi(s,a)$$$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s')$$
+		- 对价值函数进行概率展开：$$v_\pi(s) = \sum_{a \in \mathcal{A}} \pi(a|s) q_\pi(s,a)$$$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s')$$
 			- 注：$\mathcal{R}_s^a$为即时奖励的期望
 		- 由此可以推出，状态价值函数的贝尔曼方程：$$v_\pi(s) = \sum_{a \in \mathcal{A}} \pi(a|s) \left[ \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a v_\pi(s') \right]\tag{3}$$动作价值函数的贝尔曼方程：$$q_\pi(s,a) = \mathcal{R}_s^a + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^a \sum_{a' \in \mathcal{A}} \pi(a'|s') q_\pi(s',a')\tag{4}$$
 		- 诱导MRP：称由MDP：$<\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma>$诱导的MRP：$<\mathcal{S}, \mathcal{P}^\pi, \mathcal{R}^\pi, \gamma>$，其中$$\mathcal{P}_{ss'}^\pi = \sum_{a \in \mathcal{A}} \pi(a|s) \mathcal{P}_{ss'}^a,\mathcal{R}_s^\pi = \sum_{a \in \mathcal{A}} \pi(a|s) \mathcal{R}_s^a$$基于这一过程，可以写出贝尔曼方程的矩阵形式：$$\pmb v_\pi = \pmb{\mathcal{R}}^\pi + \gamma \pmb{\mathcal{P}}^\pi \pmb v_\pi$$其闭式解为：$$\pmb v_\pi = (\pmb I - \gamma \pmb{\mathcal{P}}^\pi)^{-1} \pmb{\mathcal{R}}^\pi$$求解后，可以通过$\pi = \text{argmax}_\pi v_\pi(s)$来得到最优策略
