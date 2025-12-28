@@ -20,7 +20,7 @@
 		1. 首次访问MC：在一个长的采样链中，对每个首次遇到的状态，都使用其后面的采样链，计算当状态的一个回报值用于估计
 			- 在第$t$步，状态$s$被采样得到
 			- 更新采样数$N(t)\leftarrow N(t)+1$
-			- 更新回报函数估计值$G(s))\leftarrow G(s)+G_t$
+			- 更新回报函数估计值$G(s)\leftarrow G(s)+G_t$
 			- 估计的价值函数由均值计算得到：$$V(s)= \frac{G(s)}{N(s)}$$
 		2. 每次访问MC：对采样链中，每个采样的状态，都在线的更新其估计值
 			- 数学基础：均值可以写成如下的动态更新形式$$\mu_k = \frac{1}{k} \sum_{j=1}^k x_j = \frac{1}{k} \left( x_k + \sum_{j=1}^{k-1} x_j \right) = \frac{1}{k} \left( x_k + (k-1)\mu_{k-1} \right) \\ = \mu_{k-1} + \frac{1}{k} \left( x_k - \mu_{k-1} \right) = \mu_{k-1} + \alpha \left( x_k - \mu_{k-1} \right)$$ ^00d209
