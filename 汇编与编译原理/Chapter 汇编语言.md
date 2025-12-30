@@ -423,5 +423,394 @@ END main ; 指定程序入口为main过程
 		 mov al,[arrayB+1] ; 另一种格式，效果相同
 		```
 ## 加减运算指令
+- `INC`和`DEC`指令：
+	- `INC`指令：`INC operand`
+		- 功能：将操作数加1
+		- 操作数可以为寄存器或内存地址
+	- `DEC`指令：`DEC operand`
+		- 功能：将操作数减1
+		- 操作数可以为寄存器或内存地址
+	- 例：
+		```asm
+		 .data 
+		 myWord WORD 1000h 
+		 myDword DWORD 10000000h 
+		 
+		 .code 
+		 dec myWord ; myWord = 0FFFh 
+		 inc myWord ; myWord = 1000h 
+		 inc myDword ; myDword = 10000001h 
+		 mov ax,00FFh 
+		 inc ax ; AX = 0100h 
+		 mov ax,00FFh 
+		 inc al ; AX = 0000h（al加1后溢出为0，ax高8位不变）
+		```
+- `ADD`和`SUB`指令：
+	- `ADD`指令：`ADD destination, source`
+		- 功能：将源操作数加到目的操作数上，结果存储在目的操作数中
+		- 操作数可以为寄存器或内存地址
+	- `SUB`指令：`SUB destination, source`
+		- 功能：将源操作数从目的操作数中减去，结果存储在目的操作数中
+		- 操作数可以为寄存器或内存地址
+	- 例：
+		```asm
+		 .data 
+		 var1 DWORD 10000h 
+		 var2 DWORD 20000h 
+		 .code 
+		 mov eax,var1 ; EAX = 00010000h 
+		 add eax,var2 ; EAX = 00030000h 
+		 add ax,0FFFFh ; EAX = 0003FFFFh 
+		 add eax,1 ; EAX = 00040000h 
+		 sub ax,1 ; EAX = 0003FFFFh
+		```
+- `NEG`指令：
+	- 语法：`NEG operand`
+	- 功能：对操作数取负值（即计算其二进制补码）
+	- 操作数可以为寄存器或内存地址
+	- 例：
+		```asm
+		 .data 
+		 valB BYTE -1 
+		 valW WORD +32767 
+		 .code 
+		 mov al,valB ; AL = -1 
+		 neg al ; AL = +1 
+		 neg valW ; valW = -32767
+		```
+- 算术表达式实现：通过上述指令组合实现复杂的算术表达式
+	- 例：计算`Rval = -Xval + (Yval – Zval)`
+		```asm
+		 .data 
+		 Rval DWORD ? 
+		 Xval DWORD 26 
+		 Yval DWORD 30 
+		 Zval DWORD 40 
+		 
+		 .code 
+		 mov eax,Xval 
+		 neg eax ; EAX = -26（得到-Xval） 
+		 mov ebx,Yval 
+		 sub ebx,Zval ; EBX = -10（得到Yval - Zval） 
+		 add eax,ebx ; EAX = -36（计算-Xval + (Yval - Zval)） 
+		 mov Rval,eax ; 将结果存入Rval，Rval = -36
+		```
+	* 标志位的影响：算术逻辑指令会改变标志寄存器中的标志位：
 
+		|标志位|含义|设置 / 清除条件|
+		|---|---|---|
+		|零标志（ZF）|目标操作数等于零时设置|结果为 0 时 ZF=1，否则 ZF=0|
+		|符号标志（SF）|目标操作数为负时设置|结果为负时 SF=1（最高位为 1），为正时 SF=0（最高位为 0）|
+		|进位标志（CF）|无符号值超出范围时设置|无符号数运算结果超出目标操作数位数范围时 CF=1，否则 CF=0|
+		|溢出标志（OF）|有符号值超出范围时设置|有符号数运算结果超出目标操作数位数表示的有符号数范围时 OF=1，否则 OF=0|
 
+		- 示例：
+			1. 零标志（ZF）：
+				```asm
+				mov cx,1 
+				sub cx,1 ; CX = 0，ZF = 1 
+				mov ax,0FFFFh 
+				inc ax ; AX = 0，ZF = 1 
+				inc ax ; AX = 1，ZF = 0
+				```
+			2. 符号标志（SF）：
+				```asm
+				mov cx,0 
+				sub cx,1 ; CX = -1，SF = 1 
+				add cx,2 ; CX = 1，SF = 0 
+				mov al,0 
+				sub al,1 ; AL = 11111111b（-1），SF = 1 
+				sub al,1 ; AL = 11111110b（-2），SF = 1 
+				add al,2 ; AL = 00000000b（0），SF = 0 
+				add al,2 ; AL = 00000010b（2），SF = 0
+				```
+			3. 进位标志（CF）：
+				```asm
+				mov al,0FFh 
+				add al,1 ; CF = 1，AL = 00（无符号数0FFh+1=100h，超出8位范围） 
+				mov al,0 
+				sub al,1 ; CF = 1，AL = FF（无符号数0-1=-1，超出8位无符号数范围）
+				```
+			4. 溢出标志（OF）：
+				```asm
+				mov al,+127 
+				add al,1 ; OF = 1，AL = 80h（有符号数127+1=128，超出8位有符号数最大范围127） 
+				mov al,7Fh（即+127） 
+				add al,1 ; OF = 1，AL = 80h（与上例二进制层面相同，结果超出范围）
+				```
+## 数据相关运算符和指令
+- `OFFSET`运算符：
+	- 语法：`OFFSET name`
+	- 功能：返回变量或标签在数据段中的偏移地址，保护模式下为32位，实地址模式下为16位
+	- 例：
+		```asm
+		 .data 
+		 bVal BYTE ? 
+		 wVal WORD ? 
+		 dVal DWORD ? 
+		 dVal2 DWORD ? 
+		 
+		 .code 
+		 mov esi,OFFSET bVal ; ESI = 00404000（bVal在段起始处） 
+		 mov esi,OFFSET wVal ; ESI = 00404001（bVal占1字节，wVal在其之后） 
+		 mov esi,OFFSET dVal ; ESI = 00404003（wVal占2字节，dVal在其之后） 
+		 mov esi,OFFSET dVal2 ; ESI = 00404007（dVal占4字节，dVal2在其之后）
+		```
+- `PTR`运算符：
+	- 语法：`PTR TYPE name`
+	- 功能：用于覆盖标签（变量）的默认类型，灵活访问其内容
+	- 例：一个双字变量的不同访问方式
+		```asm
+		 .data 
+		 myDouble DWORD 12345678h（小端存储时，内存地址0000存78h，0001存56h，0002存34h，0003存12h） 
+		 .code 
+		 mov ax,myDouble ; 错误，myDouble默认是双字（4字节），ax是字（2字节），类型不匹配 
+		 mov ax,WORD PTR myDouble ; 正确，加载myDouble的低2字节，AX = 5678h 
+		 mov WORD PTR myDouble,4321h ; 正确，将4321h存入myDouble的低2字节 
+		 mov al,BYTE PTR myDouble ; AL = 78h（访问myDouble的第1字节） 
+		 mov al,BYTE PTR [myDouble+1] ; AL = 56h（访问myDouble的第2字节） 
+		 mov al,BYTE PTR [myDouble+2] ; AL = 34h（访问myDouble的第3字节） 
+		 mov ax,WORD PTR [myDouble+2] ; AX = 1234h（访问myDouble的高2字节）
+		```
+- `TYPE`运算符：
+	- 语法：`TYPE name`
+	- 功能：返回变量或数据类型的大小（以字节为单位）
+	- 例：
+		```asm
+		 .data 
+		 var1 BYTE ? 
+		 var2 WORD ? 
+		 var3 DWORD ? 
+		 var4 QWORD ? 
+		 
+		 .code 
+		 mov eax,TYPE var1 ; EAX = 1（BYTE类型占1字节） 
+		 mov eax,TYPE var2 ; EAX = 2（WORD类型占2字节） 
+		 mov eax,TYPE var3 ; EAX = 4（DWORD类型占4字节） 
+		 mov eax,TYPE var4 ; EAX = 8（QWORD类型占8字节）
+		```
+- `LENGTHOF`运算符：
+	- 语法：`LENGTHOF name`
+	- 功能：返回数组中元素的数量
+	- 例：
+		```asm
+		 .data 
+		 byte1 BYTE 10,20,30 ; 3个元素，LENGTHOF byte1 = 3 
+		 array1 WORD 30 DUP(?),0,0 ; 30个空元素加2个0，共32个元素，LENGTHOF array1 = 32 
+		 array2 WORD 5 DUP(3 DUP(?)) ; 5组，每组3个空元素，共15个元素，LENGTHOF array2 = 15 
+		 array3 DWORD 1,2,3,4 ; 4个元素，LENGTHOF array3 = 4 digitStr BYTE "12345678",0 ; 8个字符加1个结束符，共9个元素，LENGTHOF digitStr = 9 
+		 .code 
+		 mov ecx,LENGTHOF array1 ; ECX = 32
+		```
+- `SIZEOF`运算符：
+	- 语法：`SIZEOF name`
+	- 功能：返回变量或数组所占的总字节数，等于`TYPE`乘以`LENGTHOF`
+	- 例：
+		```asm
+		 .data 
+		 byte1 BYTE 10,20,30 ; 3个字节，SIZEOF byte1 = 3 
+		 array1 WORD 30 DUP(?),0,0 ; 32个字，每个2字节，SIZEOF array1 = 64 
+		 array2 WORD 5 DUP(3 DUP(?)) ; 15个字，每个2字节，SIZEOF array2 = 30 
+		 array3 DWORD 1,2,3,4 ; 4个双字，每个4字节，SIZEOF array3 = 16 
+		 digitStr BYTE "12345678",0 ; 9个字节，SIZEOF digitStr = 9 
+		 .code 
+		 mov ecx,SIZEOF array1 ; ECX = 64
+		```
+- 跨多行数据声明：
+	1. 若声明除最后一行外每行末尾都有逗号，则表示数据在继续声明，`LENGTHOF`和`SIZEOF`会计算所有行的数据
+		```asm
+		.data 
+		array WORD 10,20, 
+				30,40, 
+				50,60 ; 共6个元素，总字节数12 
+		.code 
+		mov eax,LENGTHOF array ; EAX = 6 
+		mov ebx,SIZEOF array ; EBX = 12
+		```
+	2. 若每行都是独立的声明，则每行视为单独的变量，`LENGTHOF`和`SIZEOF`只计算指定行的数据
+		```asm
+		.data 
+		array WORD 10,20 ; 标签array仅对应这一行 
+		WORD 30,40 
+		WORD 50,60 
+		
+		.code 
+		mov eax,LENGTHOF array ; EAX = 2（仅第一个WORD声明的元素数） 
+		mov ebx,SIZEOF array ; EBX = 4（2×2，仅第一个WORD声明的总字节数）
+		```
+- `LABEL`指令：
+	- 功能：为现有变量或标签指定新的数据类型，可以替代`PTR`运算符
+	- 例：
+		```asm
+		 .data 
+		 dwList LABEL DWORD ; 为intList分配DWORD类型的备用标签dwList 
+		 wordList LABEL WORD ; 为intList分配WORD类型的备用标签wordList 
+		 intList BYTE 00h,10h,00h,20h ; 原始存储位置，4字节 
+		 
+		 .code 
+		 mov eax,dwList ; EAX = 20001000h（按DWORD类型访问intList） 
+		 mov cx,wordList ; CX = 1000h（按WORD类型访问intList的前2字节） 
+		 mov dl,intList ; DL = 00h（按BYTE类型访问intList的第1字节）
+		```
+## 间接寻址
+- 间接操作数：存储变量的地址，类同指针，可以解引用
+	- 例：
+		```asm
+		 .data 
+		 val1 BYTE 10h,20h,30h 
+		 
+		 .code 
+		 mov esi,OFFSET val1 ; 将val1的地址存入esi 
+		 mov al,[esi] ; 解引用esi，AL = 10h（获取val1第一个元素） 
+		 inc esi ; esi指向val1下一个元素地址 
+		 mov al,[esi] ; AL = 20h（获取val1第二个元素） 
+		 inc esi ; esi指向val1第三个元素地址 
+		 mov al,[esi] ; AL = 30h（获取val1第三个元素）
+		```
+	- 注：需用`PTR`指定间接操作数的数据类型
+		```asm
+		 .data 
+		 myCount WORD 0 
+		 .code 
+		 mov esi,OFFSET myCount 
+		 inc [esi] ; 错误，无法确定操作数大小 
+		 inc WORD PTR [esi] ; 正确，明确为WORD类型操作数
+		```
+- 示例：数组求和（使用间接寻址）
+	```asm
+	.data 
+	arrayW WORD 1000h,2000h,3000h ; 16位数组 
+	
+	.code 
+	mov esi,OFFSET arrayW ; esi指向数组起始地址 
+	mov ax,[esi] ; 取第一个元素，AX = 1000h 
+	add esi,2 ; 数组元素为WORD类型（2字节），esi加2指向第二个元素（也可写为add esi,TYPE arrayW） 
+	add ax,[esi] ; 加第二个元素，AX = 3000h 
+	add esi,2 ; esi加2指向第三个元素 
+	add ax,[esi] ; 加第三个元素，AX = 6000h（数组总和）
+	```
+	- 若数组为双字`DWORD`类型，则每次加4
+- 变址操作数：
+	- 将常量和寄存器相加
+	- 语法：`[label + reg]`或`label[reg]`
+	- 例：
+		```asm
+		 .data 
+		 arrayW WORD 1000h,2000h,3000h 
+		 
+		 .code 
+		 mov esi,0 ; 初始索引为0 
+		 mov ax,[arrayW + esi] ; AX = 1000h（取第一个元素） 
+		 mov ax,arrayW[esi] ; 另一种格式，效果相同 
+		 add esi,2 ; 索引加2（WORD类型），指向第二个元素 
+		 add ax,[arrayW + esi] ; 加第二个元素，AX = 3000h ; 继续操作可完成数组遍历或计算
+		```
+- 索引比例：
+	- 通过将索引乘以数组的`TYPE`，对间接或变址操作数进行比例调整，以获取数组元素的偏移量
+	- 例：
+		```asm
+		 .data 
+		 arrayB BYTE 0,1,2,3,4,5 ; 8位数组，TYPE=1 
+		 arrayW WORD 0,1,2,3,4,5 ; 16位数组，TYPE=2 
+		 arrayD DWORD 0,1,2,3,4,5 ; 32位数组，TYPE=4 
+		 
+		 .code 
+		 mov esi,4 ; 索引为4 
+		 mov al,arrayB[esi * TYPE arrayB] ; esi*1=4，AL = 4（取arrayB第5个元素） 
+		 mov bx,arrayW[esi * TYPE arrayW] ; esi*2=8，BX = 0004h（取arrayW第5个元素） 
+		 mov edx,arrayD[esi * TYPE arrayD] ; esi*4=16，EDX = 00000004h（取arrayD第5个元素）
+		```
+- 指针：
+	- 可以声明指针变量存储另一个变量的偏移量，从而实现间接寻址
+	- 例：
+		```asm
+		 .data 
+		 arrayW WORD 1000h,2000h,3000h 
+		 ptrW DWORD arrayW ; ptrW存储arrayW的偏移量（也可写为ptrW DWORD OFFSET arrayW） 
+		 
+		 .code 
+		 mov esi,ptrW ; 将ptrW存储的偏移量存入esi，即esi指向arrayW 
+		 mov ax,[esi] ; AX = 1000h（取arrayW第一个元素）
+		```
+## 跳转与循环指令
+- `JMP`指令：
+	- 语法：`JMP label`
+	- 功能：无条件跳转到指定标签处继续执行
+	- 例：
+		```asm
+		 top: 
+		 ; 此处可添加指令 
+		 jmp top ; 无条件跳转到top标签，形成无限循环
+		```
+- `LOOP`指令：
+	- 语法：`LOOP label`
+	- 功能：将`ECX`寄存器减1，若结果不为0，则跳转到指定标签处继续执行
+	- 例：计算倒序和`5 + 4 + 3 + 2 + 1`：
+		```asm
+		 .data 
+		 sum DWORD 0 ; 存储结果的变量 
+		 
+		 .code 
+		 mov ecx,5 ; 设置循环计数器为5 
+		 mov eax,0 ; 初始化累加器EAX为0 
+		 
+		 sumLoop: 
+		 add eax,ecx ; 将ECX的值加到EAX中 
+		 loop sumLoop ; 循环直到ECX减到0 
+		 
+		 mov sum,eax ; 将结果存入sum变量
+		```
+		- 原理：每次执行`loop`指令时，`ECX`减1，直到`ECX`为0时跳出循环；由汇编器计算跳转偏移量
+- 嵌套循环：
+	- 如果循环发生嵌套，需要保存外层循环的`ECX`值
+	- 方法：使用堆栈保存和恢复`ECX`
+	- 例：
+		```asm
+		 .data 
+		 count DWORD ? ; 用于保存外层循环计数器 
+		 .code 
+		 mov ecx,100 ; 设置外层循环次数为100 
+		 L1: 
+		 mov count,ecx ; 保存外层循环的ECX值 
+		 mov ecx,20 ; 设置内层循环次数为20 
+		 L2: 
+		 ; 内层循环执行的指令 
+		 loop L2 ; 内层循环，ECX自减1，非零则跳回L2 
+		 mov ecx,count ; 恢复外层循环的ECX值 
+		 loop L1 ; 外层循环，ECX自减1，非零则跳回L1
+		```
+	- 数组求和、字符串复制都是常见的嵌套循环应用
+## 64位汇编指令集特性
+- `MOV`指令特殊性：
+	- 在64位模式下，`MOV`指令支持64位寄存器操作，也支持对应的32位、16位和8位寄存器
+	- 低位数据传送到高位寄存器时，32位传输会将高32位清零，而16位和8位传输不会影响高位
+- 其他指令特殊性：
+	1. **MOVSXD 指令**：将 32 位值符号扩展为 64 位值，并存入 64 位目标寄存器。
+	2. **OFFSET 运算符**：在 64 位模式下生成 64 位地址。
+	3. **LOOP 指令**：使用 64 位 RCX 寄存器作为计数器（替代 32 位模式下的 ECX）。
+	4. **索引寄存器**：RSI 和 RDI 是 64 位模式下访问数组最常用的 64 位索引寄存器。
+	5. **加减运算与标志位**：ADD 和 SUB 指令对标志位的影响与 32 位模式相同。
+	6. **索引比例**：64 位模式下，变址操作数仍可使用比例因子。
+# 过程
+- 参见[[L2.3 机器指令-过程|计算机组成原理——过程调用]]
+- 运行时栈：
+	- 参见[[L2.3 机器指令-过程#运行时栈的结构|计算机组成原理——运行时栈的结构]]
+	- 核心指令：
+		- `PUSH`：对32位，将栈指针减4，并将操作数存入栈顶
+		- `POP`：对32位，将栈顶数据取出存入操作数，并将栈指针加4
+		- `PUSHFD/POPFD`：将`EFLAGS`寄存器（也即标志位寄存器）内容压入/弹出栈
+		- `PUSHAD/POPAD`：将所有通用寄存器内容压入/弹出栈
+		- `PUSHA/POPA`：将16位模式下所有通用寄存器内容压入/弹出栈
+	- 例：
+		```asm
+		 push esi ; 保存寄存器 
+		 push ecx 
+		 push ebx 
+		 mov esi, OFFSET dwordVal ; 初始化操作 
+		 mov ecx, LENGTHOF dwordVal 
+		 mov ebx, TYPE dwordVal 
+		 call DumpMem ; 调用过程 
+		 pop ebx ; 恢复寄存器（逆序） 
+		 pop ecx 
+		 pop esi
+		```
