@@ -346,4 +346,82 @@ END main ; 指定程序入口为main过程
 	|r/m32|32 位操作数，可为 32 位通用寄存器或内存双字|
 	|mem|8 位、16 位或 32 位内存操作数|
 
+- 直接内存操作数：对内存中存储位置的命名引用
+	- 例：
+		```asm
+		 .data 
+		 var1 BYTE 10h 
+		 
+		 .code 
+		 mov al,var1 ; AL = 10h，直接使用标签 
+		 mov al,[var1] ; AL = 10h，方括号为另一种格式，效果相同
+		```
+- `MOV`指令：
+	- 语法：`MOV destination, source`
+	- 要求：
+		1. 不允许有超过一个内存操作数
+		2. `CS`、`EIP`、`IP`寄存器不能作为目的操作数
+		3. 不允许立即数传送到段寄存器
+		- 例：
+			```asm
+			 .data 
+			 count BYTE 100 
+			 wVal WORD 2 
+			 .code 
+			 mov al,wVal ; 错误，操作数位数不匹配 
+			 mov ax,count ; 错误，操作数位数不匹配 
+			 mov eax,count ; 错误，操作数位数不匹配
+			```
+- 零扩展与符号扩展
+	1. 零扩展（Zero Extension）：
+		- 将较小的数据类型扩展为较大的数据类型时，在高位填充零
+		- 适用于无符号数据类型
+		- 例：
+			```asm
+			 mov bl,10001111b 
+			 movzx ax,bl ; 执行后AX的高8位为0，低8位为10001111b
+			```
+	2. 符号扩展（Sign Extension）：
+		- 将较小的数据类型扩展为较大的数据类型时，保持符号位不变
+		- 适用于有符号数据类型
+		- 例：
+			```asm
+			 mov bl,10001111b 
+			 movsx ax,bl ; 执行后AX的高8位与bl的最高位（1）相同，即11111111b，低8位为10001111b
+			```
+- `XCHG`指令：
+	- 语法：`XCHG destination, source`
+	- 功能：交换两个操作数的值
+	- 要求：
+		1. 不允许有超过一个内存操作数
+		2. `CS`、`EIP`、`IP`寄存器不能作为操作数
+	- 例：
+		```asm
+		 .data 
+		 val1 DWORD 12345678h 
+		 val2 DWORD 9ABCDEF0h 
+		 
+		 .code 
+		 mov eax,val1 ; EAX = 12345678h 
+		 mov ebx,val2 ; EBX = 9ABCDEF0h 
+		 xchg eax,ebx ; 交换EAX和EBX的值 
+		 ; 执行后，EAX = 9ABCDEF0h，EBX = 12345678h
+		```
+- 直接偏移操作数：
+	- 语法：`[base + index * scale + displacement]`
+	- 组成部分：
+		- `base`：基址寄存器，如`EAX`、`EBX`等
+		- `index`：变址寄存器，如`ESI`、`EDI`等
+		- `scale`：缩放因子，取值为1、2、4或8
+		- `displacement`：位移量，可以是立即数或符号常量
+	- 例：
+		```asm
+		 .data 
+		 arrayB BYTE 10h,20h,30h,40h 
+		 .code 
+		 mov al,arrayB+1 ; AL = 20h，arrayB+1为有效地址 
+		 mov al,[arrayB+1] ; 另一种格式，效果相同
+		```
+## 加减运算指令
+
 
