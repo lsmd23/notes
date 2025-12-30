@@ -59,3 +59,70 @@
 		- SSE、AVX 等 SIMD 指令集扩展，用于加速多媒体和科学计算
 		- 支持更高效的浮点运算和并行处理
 # 汇编语言基础
+- 标准程序模板：
+```asm
+; Program Template (Template.asm) 
+.386 ; 指定使用80386处理器指令集 
+.model flat,stdcall ; 定义内存模型为flat，调用约定为stdcall 
+.stack 4096 ; 分配4096字节的栈空间 ExitProcess PROTO, dwExitCode:DWORD ; 声明ExitProcess函数原型 
+
+.data ; 数据段，用于声明变量 
+; declare variables here 
+
+.code ; 代码段，用于编写程序指令 
+main PROC ; 主过程开始 
+; write your code here 
+INVOKE ExitProcess,0 ; 调用ExitProcess函数，结束程序 
+main ENDP ; 主过程结束 
+; (insert additional procedures here) 
+END main ; 指定程序入口为main过程
+```
+- 基本元素：
+	- 整数：
+		- 可带有前导的+或-号
+		- 支持不同进制，16进制以`h`结尾（以字母开头需加前导0，如`0Ah`），10进制无后缀，8进制以`o`结尾，2进制以`b`结尾
+	- 整数表达式：运算遵循对应的优先级规则
+	- 字符与字符串：
+		- 字符用单引号或双引号括起，占1字节
+		- 字符串也用单引号或双引号括起，每个字符占1字节
+		- 可以嵌入引号
+	- 保留字与标识符：
+		- 保留字：汇编语言中具有特殊含义的词汇（如指令、伪指令等），不能用作变量名或过程名
+		- 标识符：用于命名变量、过程等，自定义名称，以字母、下划线、@、或\$开头，后续字符可以是字母、数字、下划线、@、\$，不区分大小写
+	- 伪指令：
+		- 用于指导汇编器如何处理代码和数据，不生成机器代码
+		- 例子：`.data`、`.code`、`.model`、`.stack`等
+	- 指令：
+		- 汇编语言的核心，用于执行具体操作
+		- 包括数据传输指令、算术运算指令、逻辑运算指令、控制转移指令等
+		- 结构：\[标签:\] 操作码 操作数(s) ; 注释\]
+	- 标签：
+		- 用于标识代码或数据的位置
+		- 以冒号结尾，可作为跳转目标或数据引用
+	- 助记符和操作数：
+		- 指令助记符：指令的名称，如`MOV`、`ADD`、`JMP`等
+		- 操作数：指令作用的对象，可以是寄存器、内存地址、立即数等
+	- 注释：
+		- 用于解释代码，增强可读性
+		- 以分号（`;`）开头，直到行尾
+		- 多行注释以`COMMENT`和用户选择的字符为开头和结尾
+- 示例代码：
+```asm
+TITLE Add and Subtract (AddSubAlt.asm) 
+; This program adds and subtracts 32-bit integers. 
+.386 
+.MODEL flat,stdcall 
+.STACK 4096 
+ExitProcess PROTO, dwExitCode:DWORD 
+DumpRegs PROTO 
+
+.code 
+main PROC 
+mov eax,10000h ; EAX = 10000h（将10000h送入EAX寄存器） 
+add eax,40000h ; EAX = 50000h（EAX寄存器值加40000h） 
+sub eax,20000h ; EAX = 30000h（EAX寄存器值减20000h） 
+call DumpRegs ; 调用DumpRegs函数显示寄存器状态 
+INVOKE ExitProcess,0 ; 调用ExitProcess函数结束程序 
+main ENDP 
+END main
+```
