@@ -107,22 +107,127 @@ END main ; 指定程序入口为main过程
 		- 以分号（`;`）开头，直到行尾
 		- 多行注释以`COMMENT`和用户选择的字符为开头和结尾
 - 示例代码：
-```asm
-TITLE Add and Subtract (AddSubAlt.asm) 
-; This program adds and subtracts 32-bit integers. 
-.386 
-.MODEL flat,stdcall 
-.STACK 4096 
-ExitProcess PROTO, dwExitCode:DWORD 
-DumpRegs PROTO 
+	```asm
+	TITLE Add and Subtract (AddSubAlt.asm) 
+	; This program adds and subtracts 32-bit integers. 
+	.386 
+	.MODEL flat,stdcall 
+	.STACK 4096 
+	ExitProcess PROTO, dwExitCode:DWORD 
+	DumpRegs PROTO 
+	
+	.code 
+	main PROC 
+	mov eax,10000h ; EAX = 10000h（将10000h送入EAX寄存器） 
+	add eax,40000h ; EAX = 50000h（EAX寄存器值加40000h） 
+	sub eax,20000h ; EAX = 30000h（EAX寄存器值减20000h） 
+	call DumpRegs ; 调用DumpRegs函数显示寄存器状态 
+	INVOKE ExitProcess,0 ; 调用ExitProcess函数结束程序 
+	main ENDP 
+	END main
+	```
+	- 输出：![[Pasted image 20251230105622.png]]
+- 程序的编译过程：
+	- 示意图：![[Pasted image 20251230105820.png]]
+	- 步骤：
+		1. 编写汇编源代码文件（.asm）
+		2. 使用汇编器（如MASM）将源代码汇编为目标文件（.obj）
+		3. 使用链接器（如LINK）将目标文件与所需的库文件链接，生成可执行文件（.exe）
+	- 列表文件：包含源码、机器码和地址信息的文件，便于调试
 
-.code 
-main PROC 
-mov eax,10000h ; EAX = 10000h（将10000h送入EAX寄存器） 
-add eax,40000h ; EAX = 50000h（EAX寄存器值加40000h） 
-sub eax,20000h ; EAX = 30000h（EAX寄存器值减20000h） 
-call DumpRegs ; 调用DumpRegs函数显示寄存器状态 
-INVOKE ExitProcess,0 ; 调用ExitProcess函数结束程序 
-main ENDP 
-END main
-```
+- 数据定义：
+	- 数据类型：
+		- 整数类型：
+
+		| 数据类型   | 位数  | 类型  | 说明        |
+		| ------ | --- | --- | --------- |
+		| BYTE   | 8   | 无符号 | 8 位无符号整数  |
+		| SBYTE  | 8   | 有符号 | 8 位有符号整数  |
+		| WORD   | 16  | 无符号 | 16 位无符号整数 |
+		| SWORD  | 16  | 有符号 | 16 位有符号整数 |
+		| DWORD  | 32  | 无符号 | 32 位无符号整数 |
+		| SDWORD | 32  | 有符号 | 32 位有符号整数 |
+		| QWORD  | 64  | 整数  | 64 位整数    |
+		| TBYTE  | 80  | 整数  | 80 位整数    |
+
+		- 实数类型：
+		
+		| 数据类型   | 字节数 | 类型        | 说明              |
+		| ------ | --- | --------- | --------------- |
+		| REAL4  | 4   | IEEE 短实数  | 4 字节 IEEE 短实数   |
+		| REAL8  | 8   | IEEE 长实数  | 8 字节 IEEE 长实数   |
+		| REAL10 | 10  | IEEE 扩展实数 | 10 字节 IEEE 扩展实数 |
+
+	- 定义语句：
+		- 语法：`[name] DATA_TYPE initial_value [, initial_value ...]`
+		- 例：`myByte BYTE 10`、`myArray WORD 1, 2, 3, 4`
+	- 定义示例：
+		- `BYTE`数据：
+		```asm
+		value1 BYTE 'A' ; 字符常量，存储'A'的ASCII码 
+		value2 BYTE 0 ; 最小的无符号字节值 
+		value3 BYTE 255 ; 最大的无符号字节值 
+		value4 SBYTE -128 ; 最小的有符号字节值 
+		value5 SBYTE +127 ; 最大的有符号字节值
+		 value6 BYTE ? ; 未初始化的字节
+		```
+		- 字节数组：
+		```asm
+		list1 BYTE 10,20,30,40 ; 包含4个字节的数组 
+		list2 BYTE 10,20,30,40 
+			  BYTE 50,60,70,80 ; 续行定义数组 
+			  BYTE 81,82,83,84 
+		list3 BYTE ?,32,41h,00100010b ; 包含未初始化和不同进制值的数组 
+		list4 BYTE 0Ah,20h,'A',22h ; 包含十六进制、ASCII码的数组
+		```
+		- 字符串：
+		```asm
+		str1 BYTE 'Hello, World!',0 ; 以空字符结尾的字符串
+		str2 BYTE "Assembly Language",0 ; 使用双引号的字符串
+		str3 BYTE 'A','E','I','O','U' ; 无空终止的字符数组
+		greeting BYTE "Welcome to the Encryption Demo program "
+		         BYTE "created by Kip Irvine.",0 ; 多行字符串
+		menu BYTE "Checking Account",0dh,0ah,0dh,0ah, 
+				  "1. Create a new account",0dh,0ah, 
+				  "2. Open an existing account",0dh,0ah, 
+				  "3. Credit the account",0dh,0ah, 
+				  "4. Debit the account",0dh,0ah, 
+				  "5. Exit",0ah,0ah, "Choice> ",0 ; 跨多行字符串
+		str4 BYTE "Enter your name: ",0Dh,0Ah 
+			 BYTE "Enter your address: ",0
+			newLine BYTE 0Dh,0Ah,0 ; 定义换行符常量
+		```
+		- `DUP`运算符：用于分配存储空间，语法为`count DUP(value)`
+		```asm
+		var1 BYTE 20 DUP(0) ; 20个字节，均初始化为0 
+		var2 BYTE 20 DUP(?) ; 20个未初始化的字节 
+		var3 BYTE 4 DUP("STACK") ; 20个字节，存储"STACKSTACKSTACKSTACK" 
+		var4 BYTE 10, 3 DUP(0), 20 ; 5个字节，值为10、0、0、0、20
+		```
+		- `WORD`和`SWORD`数据：
+		```asm
+		word1 WORD 65535 ; 最大的无符号16位整数 
+		word2 SWORD –32768 ; 最小的有符号16位整数 
+		word3 WORD ? ; 未初始化的无符号16位整数 
+		word4 WORD "AB" ; 存储'A'和'B'的ASCII码（双字符） 
+		myList WORD 1,2,3,4,5 ; 16位整数数组 
+		array WORD 5 DUP(?) ; 未初始化的16位整数数组
+		```
+		- `DWORD`和`SDWORD`数据：
+		```asm
+		val1 DWORD 12345678h ; 无符号32位整数
+		val2 SDWORD –2147483648 ; 最小的有符号32位整数 
+		val3 DWORD 20 DUP(?) ; 未初始化的无符号32位整数数组 
+		val4 SDWORD –3,–2,–1,0,1 ; 有符号32位整数数组
+		```
+		- `QWORD`等实数数据：
+		```asm
+		quad1 QWORD 1234567812345678h ; 64位整数 
+		val1 TBYTE 1000000000123456789Ah ; 80位整数 
+		rVal1 REAL4 -2.1 ; 4字节IEEE短实数 
+		rVal2 REAL8 3.2E-260 ; 8字节IEEE长实数 
+		rVal3 REAL10 4.6E+4096 ; 10字节IEEE扩展实数 
+		ShortArray REAL4 20 DUP(0.0) ; 20个4字节IEEE短实数数组，初始化为0.0
+		```
+	- 字节顺序：参见[[L1.1 信息-整数的表示#^83b008|计算机组成原理——字节顺序]]
+	- 
