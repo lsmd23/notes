@@ -886,19 +886,291 @@ END main ; 指定程序入口为main过程
 # 条件处理
 ## 布尔量与比较指令
 - [[Chapter 汇编语言#^235954|CPU的状态标志位]]
-- 布尔运算指令
+- 布尔运算指令：
 	- `AND`指令：
+		- 语法：`AND destination, source`
+		- 功能：对两个操作数执行按位与运算，结果存储在目的操作数中
+		- 只有两个位都为 1 时，结果位才为 1，可用于清除特定位
+	- `OR`指令：
+		- 语法：`OR destination, source`
+		- 功能：对两个操作数执行按位或运算，结果存储在目的操作数中
+		- 只要有一个位为 1，结果位就为 1，可用于设置特定位
+	- `XOR`指令：
+		- 语法：`XOR destination, source`
+		- 功能：对两个操作数执行按位异或运算，结果存储在目的操作数中
+		- 两个位不同则结果位为 1，相同则为 0，可用于翻转特定位
+	- `NOT`指令：
+		- 语法：`NOT operand`
+		- 功能：对操作数执行按位取反运算
+		- 将操作数的每个位翻转，0变1，1变0
+- 位映射集合：用二进制位表示集合成员关系，可以高效节省空间
+	- 例：![[Pasted image 20251230161600.png]]
+	- 核心操作：
+		- 补集：`mov eax, setX` + `not eax`（将集合X的位取反）
+		- 交集：`mov eax, setX` + `and eax, setY`（仅保留X和Y共有的成员）
+		- 并集：`mov eax, setX` + `or eax, setY`（保留X或Y的所有成员）
+- `TEST`和`CMP`指令：
+	- `TEST`指令：
+		- 语法：`TEST operand1, operand2`
+		- 功能：对两个操作数执行按位与运算，但不存储结果，仅更新标志位
+		- 常用于检测指令跳转条件
+	- `CMP`指令：
+		- 语法：`CMP operand1, operand2`
+		- 功能：对两个操作数执行减法运算（也即`operand1` - `operand2`），但不存储结果，仅更新标志位
+		- 常用于比较两个值以决定跳转条件
 ## 条件跳转
+- 在满足特定条件时跳转到指定标签处继续执行
+	- 对386之前的处理器，跳转范围仅限于-128到+127字节（相对当前程序计数器，也即相对当前指令地址）
+	- 对x86处理器，可以跳转到内存中的任何位置
+- 跳转指令类型：
+	- 基于特定标志的跳转：
 
+		|助记符（Mnemonic）|描述（Description）|标志条件（Flags）|
+		|---|---|---|
+		|JZ|零则跳转（Jump if zero）|ZF=1|
+		|JNZ|非零则跳转（Jump if not zero）|ZF=0|
+		|JC|有进位则跳转（Jump if carry）|CF=1|
+		|JNC|无进位则跳转（Jump if not carry）|CF=0|
+		|JO|有溢出则跳转（Jump if overflow）|OF=1|
+		|JNO|无溢出则跳转（Jump if not overflow）|OF=0|
+		|JS|有符号则跳转（Jump if signed）|SF=1|
+		|JNS|无符号则跳转（Jump if not signed）|SF=0|
+		|JP|偶校验则跳转（Jump if parity (even)）|PF=1|
+		|JNP|奇校验则跳转（Jump if not parity (odd)）|PF=0|
 
+	- 基于相等性的跳转：
+
+		|助记符|描述|
+		|---|---|
+		|JE|相等则跳转（Jump if equal，leftOp = rightOp）|
+		|JNE|不相等则跳转（Jump if not equal，leftOp ≠ rightOp）|
+		|JCXZ|CX 为 0 则跳转（Jump if CX=0）|
+		|JECXZ|ECX 为 0 则跳转（Jump if ECX=0）|
+	
+	- 基于无符号比较的跳转：
+
+		|助记符|描述|
+		|---|---|
+		|JA|高于则跳转（Jump if above，leftOp > rightOp）|
+		|JNBE|不低于或等于则跳转（Jump if not below or equal，同 JA）|
+		|JAE|高于或等于则跳转（Jump if above or equal，leftOp >= rightOp）|
+		|JNB|不低于则跳转（Jump if not below，同 JAE）|
+		|JB|低于则跳转（Jump if below，leftOp < rightOp）|
+		|JNAE|不高于或等于则跳转（Jump if not above or equal，同 JB）|
+		|JBE|低于或等于则跳转（Jump if below or equal，leftOp <= rightOp）|
+		|JNA|不高于则跳转（Jump if not above，同 JBE）|
+
+	- 基于有符号比较的跳转：
+
+		|助记符|描述|
+		|---|---|
+		|JG|大于则跳转（Jump if greater，leftOp > rightOp）|
+		|JNLE|不小于或等于则跳转（Jump if not less than or equal，同 JG）|
+		|JGE|大于或等于则跳转（Jump if greater than or equal，leftOp >= rightOp）|
+		|JNL|不小于则跳转（Jump if not less，同 JGE）|
+		|JL|小于则跳转（Jump if less，leftOp < rightOp）|
+		|JNGE|不大于或等于则跳转（Jump if not greater than or equal，同 JL）|
+		|JLE|小于或等于则跳转（Jump if less than or equal，leftOp <= rightOp）|
+		|JNG|不大于则跳转（Jump if not greater，同 JLE）|
+
+- 位测试（BT）指令：
+	- 语法：`BT bitBase, n`（`bitBase`可以为r/m16或r/m32，`n`可以为r16、r32或imm8）
+	- 功能：将`bitBase`操作数中第`n`位的值复制到进位标志（CF）中
 ## 条件循环
-
-
+- `LOOPZ`和`LOOPE`指令：
+	- 语法：`LOOPZ destination`或`LOOPE destination`
+	- 功能：
+		- `ECX`寄存器减1（在32位模式下，`ECX`为循环寄存器，16位实地址下为`CX`，64位模式下为`RCX`）
+		- 若`ECX > 0`且零标志（ZF）为1，则跳转到`destination`标签处继续执行
+- `LOOPNZ`和`LOOPNE`指令：
+	- 语法：`LOOPNZ destination`或`LOOPNE destination`
+	- 功能：
+		- `ECX`寄存器减1
+		- 若`ECX > 0`且零标志（ZF）为0，则跳转到`destination`标签处继续执行
+- 示例：查找数组中的第一个正值：
+	```asm
+	.data 
+	array SWORD -3,-6,-1,-10,10,30,40,4 
+	sentinel SWORD 0 
+	
+	.code 
+	mov esi,OFFSET array 
+	mov ecx,LENGTHOF array 
+	next: 
+	test WORD PTR [esi],8000h ; 测试符号位 
+	pushfd ; 将标志压入栈 
+	add esi,TYPE array 
+	popfd ; 从栈中弹出标志 
+	loopnz next ; 继续循环 
+	jnz quit ; 未找到则退出 
+	quit: sub esi,TYPE array ; ESI指向找到的值
+	```
 ## 条件控制流
+* 块结构`if`语句：参见[[L2.2 机器指令-控制#^293ed0|计算机组成原理——条件控制]]
+	* 使用跳转指令实现条件分支
+	* 优化：在高级语言中，常使用[[L6 中间代码生成#^3e8f05|短路求值]]进行优化（若第一个表达式为假，则直接跳过第二个表达式）
+		* 例：对高级语言`if (al > bl) AND (bl > cl) X = 1;`的汇编实现
+			```asm
+			cmp al,bl 
+			jbe next ; 若为假则退出 
+			cmp bl,cl ; 第二个表达式 
+			jbe next ; 若为假则退出 
+			mov X,1 ; 两者均为真 
+			next:
+			```
+- `while`循环与`do while`循环：参见[[L2.2 机器指令-控制#^392475|计算机组成原理——do-while循环控制]]以及[[L2.2 机器指令-控制#^a6faac|计算机组成原理——while循环控制]]
+- 核心伪指令实现：
+	- `IF`相关伪指令：
+		- `.IF`、`.ELSE`、`.ELSEIF`、`.ENDIF`，可评估运行时表达式并创建块结构 IF 语句
+		- 示例：
+			```asm
+			; 示例1 
+			.IF eax > ebx 
+			mov edx,1 
+			.ELSE 
+			mov edx,2 
+			.ENDIF 
+			
+			; 示例2 
+			.IF eax > ebx && eax > ecx 
+			mov edx,1 
+			.ELSE 
+			mov edx,2 
+			.ENDIF
+			```
+		- MASM 生成机制：自动生成包含代码标签、CMP 和条件跳转指令的 “隐藏” 代码，且会根据操作数类型（有符号 / 无符号）自动选择对应跳转指令（如无符号用 JBE，有符号用 JLE）
+		- 常用关系和运算符：
 
-# 整数运算
+			|运算符|描述|
+			|---|---|
+			|expr1==expr2|当 expr1 等于 expr2 时返回真|
+			|expr1!=expr2|当 expr1 不等于 expr2 时返回真|
+			|expr1>expr2|当 expr1 大于 expr2 时返回真|
+			|expr1>=expr2|当 expr1 大于或等于 expr2 时返回真|
+			|expr1<expr2|当 expr1 小于 expr2 时返回真|
+			|expr1<=expr2|当 expr1 小于或等于 expr2 时返回真|
+			|!expr|当 expr 为假时返回真|
+			|expr1&&expr2|对 expr1 和 expr2 执行逻辑 AND|
+			|expr1||expr2|对 expr1 和 expr2 执行逻辑 OR|
+			|expr1&expr2|对 expr1 和 expr2 执行按位 AND|
+			|CARRY?|若进位标志置 1 则返回真|
+			|OVERFLOW?|若溢出标志置 1 则返回真|
+			|PARITY?|若奇偶标志置 1 则返回真|
+			|SIGN?|若符号标志置 1 则返回真|
+			|ZERO?|若零标志置 1 则返回真|
 
+	- 循环相关伪指令：
+		- `REPEAT`指令：
+			- 功能：先执行循环体，再测试`.UNTIL`条件，若条件为假则继续循环
+			- 示例：
+				```asm
+				mov eax,0 
+				.REPEAT 
+				inc eax 
+				call WriteDec 
+				call Crlf 
+				.UNTIL eax == 10
+				```
+		- `WHILE`指令：
+			- 功能：先测试`.WHILE`条件，若条件为真则执行循环体，循环结束后再次测试条件，`.ENDW`处结束循环
+			- 示例：
+				```asm
+				mov eax,0 
+				.WHILE eax < 10 
+				inc eax 
+				call WriteDec 
+				call Crlf 
+				.ENDW
+				```
+# 整数运算扩展
+## 移位与循环指令
+- 移位的概念：分逻辑移位和算术移位，参考[[L1.1 信息-整数的表示#^77a63f|计算机组成原理——逻辑右移和算术右移]]
+- 指令类型：
+
+	|指令|功能|操作示例|关键说明|
+	|---|---|---|---|
+	|SHL（Shift Left）|对目标操作数执行逻辑左移，最低位填 0|`mov dl,5`（初始：00000101），`shl dl,1`（结果：00001010=10）|左移 n 位等价于操作数乘以 2ⁿ，可实现快速乘法|
+	|SHR（Shift Right）|对目标操作数执行逻辑右移，最高位填 0|`mov dl,80`（初始：01010000），`shr dl,1`（结果：00101000=40）|右移 n 位等价于无符号数除以 2ⁿ|
+	|SAL（Shift Arithmetic Left）|与 SHL 功能完全相同，执行算术左移|同 SHL 操作示例|算术左移与逻辑左移在左移操作上无差异|
+	|SAR（Shift Arithmetic Right）|对目标操作数执行算术右移，用符号位填最高位|`mov dl,-80`（初始：10110000），`sar dl,1`（结果：11011000=-40）|可保留操作数符号，右移 n 位等价于有符号数除以 2ⁿ|
+	|ROL（Rotate Left）|循环左移，最高位同时复制到进位标志（CF）和最低位|`mov al,11110000b`，`rol al,1`（结果：11100001b）|无位丢失，操作数的所有位参与循环|
+	|ROR（Rotate Right）|循环右移，最低位同时复制到进位标志（CF）和最高位|`mov al,11110000b`，`ror al,1`（结果：01111000b）|无位丢失，操作数的所有位参与循环|
+	|RCL（Rotate Carry Left）|带进位循环左移，最高位复制到 CF，CF 复制到最低位|`clc`（CF=0），`mov bl,88h`（CF,BL=0 10001000b），`rcl bl,1`（CF,BL=1 00010000b）|结合 CF 实现扩展循环，适用于多字节数据操作|
+	|RCR（Rotate Carry Right）|带进位循环右移，最低位复制到 CF，CF 复制到最高位|`stc`（CF=1），`mov ah,10h`（CF,AH=1 00010000b），`rcr ah,1`（CF,AH=0 10001000b）|结合 CF 实现扩展循环，适用于多字节数据操作|
+	|SHLD（Shift Left Double）|目标操作数左移指定位数，空位用源操作数的最高位填充|`mov al,11100000b`，`mov bl,10011101b`，`shld al,bl,1`（结果：11000001b）|源操作数不受影响，支持 16/32 位寄存器或内存操作数|
+	|SHRD（Shift Right Double）|目标操作数右移指定位数，空位用源操作数的最低位填充|`mov al,11000001b`，`mov bl,00011101b`，`shrd al,bl,1`（结果：11100000b）|源操作数不受影响，支持 16/32 位寄存器或内存操作数| 
+
+	- 操作数限制：所有移位和循环指令支持的操作数类型统一：
+		- `指令 寄存器, 立即数8位`（如`SHL reg,imm8`）
+		- `指令 内存, 立即数8位`（如`SHL mem,imm8`）
+		- `指令 寄存器, CL`（如`SHL reg,CL`）
+		- `指令 内存, CL`（如`SHL mem,CL`）
+## 乘除法指令
+- 乘法指令：
+	- `MUL`指令：无符号乘法指令
+		- 语法：`MUL source`
+		- 功能：对无符号数执行乘法运算，隐含操作数为累加器（AL、AX、EAX）
+		- 对应关系如下表：
+
+			| 操作数位数 | 被乘数 | 乘数 | 乘积存储位置 |
+			| ---- | ---- | ---- | ---- |
+			|8 位 | AL|r/m8|AX|
+			|16 位 | AX|r/m16|DX:AX（DX 存高位，AX 存低位）|
+			|32 位 | EAX|r/m32|EDX:EAX（EDX 存高位，EAX 存低位）|
+			|64 位（64 位模式）|RAX|r/m64|RDX:RAX（RDX 存高位，RAX 存低位）|
+
+		- 例：16 位无符号数乘法`100h * 2000h`，`mov ax,2000h`，`mul 100h`，结果`DX:AX=00200000h`，CF=1（表示乘积高位有有效数字）
+	- `IMUL`指令：有符号乘法指令
+		- 语法：`IMUL source`
+		- 功能：对有符号数执行乘法运算，隐含操作数为累加器
+		- 通过符号扩展将乘积符号保留到结果的高位部分
+		- 例：8 位有符号数乘法`48 * 4`，`mov al,48`，`mov bl,4`，`imul bl`，结果`AX=00C0h`，OF=1（表示 AH 不是 AL 的符号扩展，结果超出 8 位有符号数范围）
+- 除法指令：
+	- `DIV`指令：无符号除法指令
+		- 语法：`DIV source`
+		- 功能：对无符号数执行除法运算，隐含被除数为累加器（AX、DX:AX、EDX:EAX）
+		- 对应关系如下表：
+
+			| 操作数位数 | 被除数 | 除数 | 商存储位置 | 余数存储位置 |
+			| ---- | ---- | ---- | ---- | ---- |
+			|8 位 | AX|r/m8|AL|AH|
+			|16 位 | DX:AX|r/m16|AX|DX|
+			|32 位 | EDX:EAX|r/m32|EAX|EDX|
+			|64 位（64 位模式）|RDX:RAX|r/m64|RAX|RDX|
+
+		- 例：16 位无符号数除法`8003h / 100h`，`mov dx,0`（清空被除数高位），`mov ax,8003h`，`mov cx,100h`，`div cx`，结果`AX=0080h`（商），`DX=3`（余数）
+	- `IDIV`指令：有符号除法指令
+		- 语法：`IDIV source`
+		- 功能：对有符号数执行除法运算，隐含被除数为累加器
+		- 前置操作：需先对被除数进行符号扩展，将低位操作数的符号位填充到高位部分，确保运算结果正确
+		- 例：8 位有符号数除法`-48 / 5`，`mov al,-48`，`cbw`（将 AL 符号扩展到 AH），`mov bl,5`，`idiv bl`，结果`AL=-9`（商），`AH=-3`（余数）
+## 符号扩展指令：
+
+|指令|功能|示例|
+|---|---|---|
+|CBW（Convert Byte to Word）|将 AL 寄存器的符号位扩展到 AH，实现字节到字的转换|`mov al,-10`（11110110），`cbw`后`AH=11111111`，`AX=1111111111110110`|
+|CWD（Convert Word to Doubleword）|将 AX 寄存器的符号位扩展到 DX，实现字到双字的转换|`mov ax,-100`（1111111110011100），`cwd`后`DX=1111111111111111`，`DX:AX=11111111111111111111111110011100`|
+|CDQ（Convert Doubleword to Quadword）|将 EAX 寄存器的符号位扩展到 EDX，实现双字到四字的转换|`mov eax,0FFFFFF9Bh`（-101），`cdq`后`EDX:EAX=FFFFFFFFFFFFFF9Bh`
+
+## 加减法扩展指令
+- `ADC`指令（Add with Carry）：
+	- 语法：`ADC destination, source`
+	- 功能：将源操作数与目的操作数及进位标志（CF）相加，结果存储在目的操作数中
+	- 用于多字节或多字长整数的加法运算，确保进位正确传递
+- `SBB`指令（Subtract with Borrow）：
+	- 语法：`SBB destination, source`
+	- 功能：将源操作数从目的操作数中减去，并减去进位标志（CF），结果存储在目的操作数中
+	- 用于多字节或多字长整数的减法运算，确保借位正确传递
+- 注：扩展加减法指令不适用于64位模式编程
 # 高级过程控制
+## 栈与栈帧
+- 系统调用栈：参见[[L2.3 机器指令-过程#运行时栈的结构|计算机组成原理——运行时栈的结构]]以及[[L2.3 机器指令-过程#^bc450b|计算机组成原理——栈帧的结构与行为]]
+	- 构成：记录过程活动的信息，包括保存的寄存器、返回地址、局部变量和过程参数
+	- 创建过程：
+		- 调用者（caller）负责将参数压入栈
+		- 被调用者（callee）负责将基指针压入栈，设置新的基指针，并为局部变量分配空间
+
+
 
 # 字符串与数组
 
