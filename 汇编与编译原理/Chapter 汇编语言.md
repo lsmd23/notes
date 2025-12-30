@@ -230,4 +230,120 @@ END main ; 指定程序入口为main过程
 		ShortArray REAL4 20 DUP(0.0) ; 20个4字节IEEE短实数数组，初始化为0.0
 		```
 	- 字节顺序：参见[[L1.1 信息-整数的表示#^83b008|计算机组成原理——字节顺序]]
-	- 
+	- 例：添加变量定义的示例程序：
+		```asm
+		TITLE Add and Subtract, Version 2 (AddSub2.asm) 
+		; This program adds and subtracts 32-bit unsigned 
+		; integers and stores the sum in a variable. 
+		INCLUDE Irvine32.inc 
+		
+		.data 
+		val1 DWORD 10000h ; 定义无符号32位整数val1 
+		val2 DWORD 40000h ; 定义无符号32位整数val2 
+		val3 DWORD 20000h ; 定义无符号32位整数val3 
+		finalVal DWORD ? ; 定义未初始化的无符号32位整数finalVal，用于存储结果 
+		
+		.code 
+		main PROC 
+		mov eax,val1 ; 将val1的值（10000h）送入EAX寄存器 
+		add eax,val2 ; EAX寄存器值加val2的值（40000h），结果为50000h 
+		sub eax,val3 ; EAX寄存器值减val3的值（20000h），结果为30000h 
+		mov finalVal,eax ; 将EAX寄存器中的结果（30000h）存入finalVal 
+		call DumpRegs ; 调用DumpRegs函数显示寄存器状态 exit ; 退出程序 
+		main ENDP 
+		END main
+		```
+- 符号常量：
+	- 等号伪指令：
+		- 语法：`name = expression`
+		- 用于定义符号常量，表达式的值在汇编时计算
+		- 例：
+			```asm
+			COUNT = 500 ; 定义符号常量COUNT为500 
+			mov al,COUNT ; 将COUNT的值（500）送入AL寄存器
+			```
+	- 计算数组和字符串大小：
+		- 字节数组大小计算：利用当前位置寄存器`$`与数组名的差值
+		```asm
+		list BYTE 10,20,30,40 ; 字节数组list 
+		ListSize = ($ - list) ; 计算list的大小，结果为4
+		```
+		- 字数组大小计算：类似字节数组
+		```asm
+		list WORD 1000h,2000h,3000h,4000h ; 字数组list 
+		ListSize = ($ - list) / 2 ; 计算list的大小，结果为4
+		```
+		- 双字数组大小计算：类似字节数组
+		```asm
+		list DWORD 1,2,3,4 ; 双字数组list 
+		ListSize = ($ - list) / 4 ; 计算list的大小，结果为4
+		```
+	- `EQU`伪指令：
+		- 语法：`name EQU expression`
+		- 与等号伪指令类似，用于定义符号常量
+		- 例：
+			```asm
+			PI EQU <3.1416> ; 定义符号PI为文本表达式3.1416 
+			pressKey EQU <"Press any key to continue...",0> ; 定义符号pressKey为字符串表达式 
+			.data 
+			prompt BYTE pressKey ; 使用pressKey定义字符串变量prompt
+			```
+	- `TEXTEQU`伪指令：
+		- 语法：`name TEXTEQU "string"`
+		- 用于定义字符串常量
+		- 例：
+			```asm
+			continueMsg TEXTEQU <"Do you wish to continue (Y/N)?"> ; 定义文本宏continueMsg 
+			rowSize = 5 ; 定义符号常量rowSize为5 
+			.data 
+			prompt1 BYTE continueMsg ; 使用continueMsg定义字符串变量prompt1 
+			count TEXTEQU %(rowSize * 2) ; 计算表达式rowSize * 2，定义为文本宏count 
+			setupAL TEXTEQU <mov al,count> ; 定义文本宏setupAL为指令mov al,count 
+			.code 
+			setupAL ; 展开为mov al,10（因为count=5*2=10）
+			```
+- 64位系统编程：
+	- 不允许使用`invoke`、`addr`等伪指令
+	- 例：
+		```asm
+		; AddTwoSum_64.asm - Chapter 3 example. 
+		ExitProcess PROTO ; 声明ExitProcess函数原型 
+		
+		.data 
+		sum QWORD 0 ; 定义64位整数sum，初始化为0 
+		
+		.code 
+		main PROC 
+		mov rax,5 ; 将5送入64位寄存器rax 
+		add rax,6 ; rax寄存器值加6，结果为11 
+		mov sum,rax ; 将rax中的结果（11）存入sum 
+		mov ecx,0 ; 将ecx寄存器置0 
+		call ExitProcess ; 调用ExitProcess函数结束程序 
+		main ENDP 
+		END ; 指定程序入口（默认main）
+		```
+# 基本汇编伪指令
+## 数据传输指令
+- 操作数类型：
+	- 立即数：常量值，如`5`、`0FFh`
+	- 寄存器：如`EAX`、`EBX`
+	- 内存地址：变量名或标签，如`myVar`、`array[4]`
+- 指令操作数表示法：
+
+	|符号|描述|
+	|---|---|
+	|r8|8 位通用寄存器，如 AH、AL、BH、BL 等|
+	|r16|16 位通用寄存器，如 AX、BX、CX、DX 等|
+	|r32|32 位通用寄存器，如 EAX、EBX、ECX、EDX 等|
+	|reg|任意通用寄存器|
+	|sreg|16 位段寄存器，如 CS、DS、SS、ES、FS、GS|
+	|imm|8 位、16 位或 32 位立即数|
+	|imm8|8 位立即字节值|
+	|imm16|16 位立即字值|
+	|imm32|32 位立即双字值|
+	|r/m8|8 位操作数，可为 8 位通用寄存器或内存字节|
+	|r/m16|16 位操作数，可为 16 位通用寄存器或内存字|
+	|r/m32|32 位操作数，可为 32 位通用寄存器或内存双字|
+	|mem|8 位、16 位或 32 位内存操作数|
+
+
