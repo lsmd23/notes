@@ -1144,7 +1144,7 @@ END main ; 指定程序入口为main过程
 		- 功能：对有符号数执行除法运算，隐含被除数为累加器
 		- 前置操作：需先对被除数进行符号扩展，将低位操作数的符号位填充到高位部分，确保运算结果正确
 		- 例：8 位有符号数除法`-48 / 5`，`mov al,-48`，`cbw`（将 AL 符号扩展到 AH），`mov bl,5`，`idiv bl`，结果`AL=-9`（商），`AH=-3`（余数）
-## 符号扩展指令：
+## 符号扩展指令
 
 |指令|功能|示例|
 |---|---|---|
@@ -1671,9 +1671,351 @@ END main ; 指定程序入口为main过程
 			; 调用：mPutchar 'A'，展开为： 
 			; push eax → mov al,'A' → call WriteChar → pop eax
 			```
+		- 字符串输出宏：`mWriteStr`
+			```asm
+			; 定义（保护edx寄存器） 
+			mWriteStr MACRO buffer 
+				push edx 
+				mov edx,OFFSET buffer ; buffer为字符串地址形参 
+				call WriteString 
+				pop edx 
+			ENDM 
+			
+			; 调用：mWriteStr str1（str1为.data中定义的字符串）
+			```
+		- 常见错误：
+			- **无效实参**：如`mPutchar 1234h`，展开后`mov al,1234h`（al 仅 1 字节，超出范围）
+			- **空实参**：如`mPutchar`，展开后`mov al,`（语法错误）
+- 条件汇编指令：
+	- 功能：根据汇编时条件决定是否生成某段代码，在预处理阶段判断，指导汇编过程
+	- 关键指令：
+		- 检查缺失参数`IFB`：
+			- 功能：检查宏调用时某个参数是否为空
+			- 语法：`IFB <ParamName>`，配套`EXITM`（退出宏）指令使用
+			- 例：
+				```asm
+				mPutchar MACRO char 
+					IFB char 
+						EXITM ; 若参数为空，退出宏 
+					ENDIF 
+					mov al,char 
+					call WriteChar 
+				ENDM
+				```
+		- 默认参数初始化`:=<Default>`：
+			- 功能：为宏参数指定默认值，若调用时未提供实参，则使用默认值
+			- 语法：`ParamName := <DefaultValue>`，在宏定义的参数列表中使用
+			- 例：
+				```asm
+				mPutchar MACRO char := 'A' 
+					mov al,char 
+					call WriteChar 
+				ENDM
+				```
+				调用`mPutchar`时若不提供实参，则默认输出字符`'A'`
+		- 布尔表达式判断`IF + 条件`：
+			- 功能：根据布尔表达式的结果，判断汇编时常量是否满足条件从而决定是否生成某段代码
+			- 语法：`IF <Condition>`，配套`ELSE`和`ENDIF`指令使用
+			- 支持的运算符：
 
+				|运算符|含义|示例（判断 RealMode 是否为 1）|
+				|---|---|---|
+				|LT|小于|`IF RealMode LT 1`|
+				|GT|大于|`IF RealMode GT 1`|
+				|EQ|等于|`IF RealMode EQ 1`|
+				|NE|不等于|`IF RealMode NE 1`|
+				|LE|小于等于|`IF RealMode LE 1`|
+				|GE|大于等于|`IF RealMode GE 1`| 
 
+		- 符号匹配判断`IFIDN`/`IFIDNI`：
+			- 功能：判断两个符号名称是否相同（区分大小写或不区分大小写），常用于防止调用时传入冲突参数
+			- 语法：
+				- `IFIDN <Symbol1>, <Symbol2>`：区分大小写
+				- `IFIDNI <Symbol1>, <Symbol2>`：不区分大小写
+			- 例：
+				```asm
+				IFIDN Mode, mode 
+					; 若 Mode 与 mode 名称完全相同（区分大小写），则生成此代码 
+				ELSE 
+					; 否则生成此代码 
+				ENDIF
+				```
+		- 特殊运算符：
+			- 替换运算符`&`：用于连接符号名称和参数，生成新的符号名称
+				- 例：`"&regName="`，此处`regName`为参数。若`regName`为`EAX`，则生成符号`EAX=`
+			- 展开运算符`%`：用于展开宏参数，获取参数的实际值
+				- 例：`%(5*10)`，展开后为`50`
+			- 文本运算符`<>`：用于将宏参数转换为字符串文本
+				- 例：`<"a,b">`，展开后为字符串`"a,b"`
+			- 转义运算符`!`：用于在宏定义中插入特殊字符
+				- 例：`!>`，展开后为`>`字符
+- 宏函数
+	- 功能：类似于宏，但返回一个值，可在表达式中使用
+		- 调用时，实参需要用括号包裹
+	- 示例：判断符号是否定义
+		```asm
+		IsDefined MACRO symbol 
+			IFDEF symbol 
+				EXITM <-1> ; 已定义→返回-1（真） 
+			ELSE 
+				EXITM <0> ; 未定义→返回0（假） 
+			ENDIF 
+		ENDM 
+		; 调用：IF IsDefined(RealMode) → 生成初始化代码 → ENDIF
+		```
+- 重复块定义：用于汇编时重复生成某段代码/数据，减少手动编写的冗余
+	- 指令：
+		- `WHILE`指令（条件循环生成）：
+			- 功能：根据条件表达式，在满足条件时重复生成代码块，直到条件不满足
+			- 语法：
+				```asm
+				WHILE 常量表达式 ; 仅支持汇编时常量，如val3 LT 0F0000000h 
+					重复生成的代码/数据 
+					[更新常量表达式的变量] ; 避免死循环 
+				ENDM
+				```
+			- 例：生成斐波那契数列
+				```asm
+				.data 
+				val1 = 1 ; 斐波那契第1项 
+				val2 = 1 ; 斐波那契第2项 
+				DWORD val1 ; 生成第1项数据（4字节） 
+				DWORD val2 ; 生成第2项数据 
+				val3 = val1 + val2; 计算第3项 
+				
+				; 循环条件：val3 < 0F0000000h 
+				WHILE val3 LT 0F0000000h 
+					DWORD val3 ; 生成当前项数据 
+					; 更新下一次计算的变量 
+					val1 = val2 
+					val2 = val3 
+					val3 = val1 + val2 
+				ENDM
+				```
+		- `REPEAT`指令（固定次数循环生成）：
+			- 功能：根据指定的重复次数，生成代码块
+			- 语法：
+				```asm
+				REPEAT 次数 ; 次数为汇编时常量（如100、5*20） 
+					重复生成的代码/数据 
+					[更新变量] ; 可选，用于生成连续值 
+				ENDM
+				```
+			- 例：生成100个DWORD类型的数组元素
+				```asm
+				.data 
+				iVal = 10 ; 初始值 
+				REPEAT 100 ; 重复100次 
+					DWORD iVal ; 生成当前iVal的DWORD数据 
+					iVal = iVal + 10 ; 每次加10，生成下一个值 
+				ENDM
+				```
+		- `FOR`指令（列表遍历生成）：
+			- 功能：遍历指定的列表，为每个元素生成代码块
+			- 语法：
+				```asm
+				FOR 参数名,<符号1,符号2,符号3,...> ; 列表用<>包裹，符号间用逗号分隔 
+					用参数名生成代码（如定义变量、字段） 
+				ENDM
+				```
+			- 例：为`Window`结构体批量生成 4 个颜色字段
+				```asm
+				Window STRUCT ; 定义结构体 
+					; 遍历符号列表<frame,titlebar,background,foreground> 
+					FOR color,<frame,titlebar,background,foreground> 
+						color DWORD ? ; 每次循环生成一个DWORD字段（如frame DWORD ?） 、
+					ENDM 
+				Window ENDS
+				```
+		- `FORC`指令（字符遍历生成）：
+			- 功能：遍历指定的字符集合，为每个字符生成代码块
+			- 语法：
+				```asm
+				FORC 参数名,<字符串> ; 字符串用<>包裹，每个字符单独遍历 
+					用参数名+字符拼接生成代码（需配合替换运算符&） 
+				ENDM
+				```
+			* 例：遍历字符串生成对应的命名组
+				```asm
+				.data 
+				; 遍历字符串ABCDEFG，每个字符赋值给参数code 
+				FORC code,<ABCDEFG> 
+					Group_&code WORD ? ; &将code替换为当前字符（如A→Group_A） 
+				ENDM
+				```
 # Windows API 编程
 ## Windows控制台编程
+- 基本概念：
+	- Windows控制台程序特性：
+		- 运行于保护模式，支持基于文本的输入输出
+		- 链接器配置选项：`/SUBSYSTEM:CONSOLE`
+		- 缓冲区：
+			- 输入缓冲区：存储输入事件的队列
+			- 屏幕缓冲区：存储显示内容的二维字符数组
+	- 控制台函数类型：
+		- 文本导向：高级函数，从输入缓冲区读取文本行，向屏幕缓冲区写入文本行，重定向输入输出
+		- 事件导向：低级函数，处理输入事件（键盘、鼠标等），直接操作屏幕缓冲区
+	- Windows/MASM数据映射：
 
+		|Windows 类型|MASM 类型|
+		|---|---|
+		|BOOL|DWORD|
+		|LONG|SDWORD|
+		|COLORREF、HANDLE、LPARAM 等|DWORD|
+		|BSTR、LPCSTR、LPSTR|PTR BYTE|
+		|WORD|WORD|
+		|LPCRECT|PTR RECT|
+
+- 核心操作与API：
+	- 标准控制台句柄：
+		- 句柄：无符号的32位整数，用于标识控制台流
+		- 预定义常量：`STD_INPUT_HANDLE`（标准输入）、`STD_OUTPUT_HANDLE`（标准输出）、`STD_ERROR_HANDLE`（标准错误输出）
+		- 获取句柄API：`GetStdHandle`，参数为句柄类型，返回值存储于`EAX`
+			```asm
+			INVOKE GetStdHandle, STD_OUTPUT_HANDLE 
+			mov myHandle, eax
+			```
+	- 控制台输入输出：
+		- 输入API：`ReadConsole`
+			- 读取文本行到缓冲区
+			- 单字符输入
+		- 输出API：`WriteConsole`
+			- 向屏幕缓冲区写入文本行
+			- 单字符输出
+		- 例：
+			```asm
+			mainc1 PROC  
+			; Get the console output handle:  
+				INVOKE GetStdHandle, STD_OUTPUT_HANDLE  
+				mov consoleHandle,eax  
+				mov ebx, messageSize  
+			
+			; Write a string to the console:  
+				INVOKE WriteConsole,  
+					consoleHandle, ; console output handle  
+					ADDR message, ; string pointer  
+					ebx, ; string length  
+					ADDR bytesWritten, ; ret num bytes written  
+					0 ; not used  
+				INVOKE ExitProcess,0  
+			mainc1 ENDP
+			```
+	- 控制台窗口与光标控制：
+		- 关键数据结构：
+			- `COORD`：屏幕坐标，包含`X`和`Y`两个字段，默认范围为`(0,0)`到`(79,24)`
+			- `SMALL_RECT`：窗口位置，包含`Left`、`Top`、`Right`、`Bottom`四个字段
+			- `CONSOLE_SCREEN_BUFFER_INFO`：屏幕缓冲区信息，包含缓冲区大小、窗口位置、光标位置等字段
+			- `CONSOLE_CURSOR_INFO`：光标信息，包含光标大小`dwSize`和可见性`bVisible`字段
+		- 窗口操作API：
+			- `SetConsoleTitle`：修改控制台窗口标题，需传入以 null 结尾的字符串
+			- `GetConsoleScreenBufferInfo`：获取屏幕缓冲区状态，参数为句柄和`CONSOLE_SCREEN_BUFFER_INFO`结构指针
+			- `SetConsoleWindowInfo`：设置窗口大小与位置（`bAbsolute`为 1 时用绝对坐标，0 时用相对坐标）
+			- `SetConsoleScreenBufferSize`：设置屏幕缓冲区大小（X 列 ×Y 行）
+		- 光标操作API：`GetConsoleCursorInfo`（获取光标信息）、`SetConsoleCursorInfo`（设置光标信息）、`SetConsoleCursorPosition`（设置光标 X/Y 坐标）
+	- 文本颜色控制：
+		- `SetConsoleTextAttribute`：设置后续文本的前景色与背景色，参数为输出句柄和颜色属性
+		- `WriteConsoleOutputAttribute`：将颜色属性数组复制到屏幕缓冲区连续单元格，需指定起始位置
+		- `WriteConsoleOutputCharacter`：将字符数组复制到屏幕缓冲区连续单元格，需指定起始位置
+	- 文件操作：
+		- `CreateFile`：创建或打开文件，成功返回文件句柄，失败返回`INVALID_HANDLE_VALUE`，支持读（`GENERIC_READ`）、写（`GENERIC_WRITE`）模式，创建选项含`OPEN_EXISTING`（打开现有文件）、`CREATE_ALWAYS`（创建新文件，覆盖同名文件）
+		- `ReadFile`：从文件读取文本到缓冲区
+		- `WriteFile`：向文件（或屏幕缓冲区）写入数据
+		- `SetFilePointer`：移动文件指针，支持定位到文件末尾（`FILE_END`）实现追加写入
+	- 时间与日期：
+		- 核心API：`GetLocalTime`（获取系统本地时间）、`SetLocalTime`（设置系统本地时间）、`GetTickCount`（返回系统启动后毫秒数，存于 EAX）、`Sleep`（暂停程序指定毫秒数）
+		- 关键结构体：`SYSTEMTIME`，存储年（4 位）、月（1-12）、星期（0-6）、日（1-31）、时（0-23）、分（0-59）、秒（0-59）、毫秒（0-999）
 ## Windows图形界面编程
+- 文件配置：
+	- 源码文件：`WinApp.asm`
+	- 批处理文件：`make32.bat`用于构建程序
+	- 头文件：`GraphWin.inc`包含必要的常量、结构体和函数声明
+	- 库文件：`kernel32.lib`基础API库、`user32.lib`图形界面API库
+	- 链接器选项：`/SUBSYSTEM:WINDOWS`指定为图形界面程序
+- 关键数据结构：
+	- `POINT`：屏幕坐标（`ptX`、`ptY`，均为 DWORD）
+	- `RECT`：矩形坐标（`left`、`top`、`right`、`bottom`，均为 DWORD）
+	- `MSGStruct`：Windows 消息数据（含窗口句柄、消息 ID、参数 1、参数 2、时间、坐标）
+	- `WNDCLASS`：窗口类结构（含窗口风格、应用实例句柄、消息处理函数指针、背景画刷句柄、图标 / 光标句柄、类名等），每个窗口需关联一个窗口类
+- 核心框架：
+	- `MessageBox`函数：
+		- 功能：显示消息对话框，等待用户响应
+		- 原型：
+			```asm
+			MessageBox PROTO, 
+				hWnd:DWORD, ; 窗口句柄 
+				lpText:PTR BYTE, ; 消息文本指针 
+				lpCaption:PTR BYTE, ; 标题文本指针 
+				uType:DWORD ; 风格（含图标、按钮类型）
+			```
+		- 例：
+			```asm
+			.data 
+			hMainWnd DWORD ? 
+			QuestionText BYTE "Register this program now?",0 
+			QuestionTitle BYTE "Trial Period Has Expired",0 
+			
+			.code 
+			INVOKE MessageBox, 
+				hMainWnd, 
+				ADDR QuestionText, 
+				ADDR QuestionTitle, 
+				MB_OK + MB_ICONQUESTION
+			```
+	- 核心过程：
+		- `WinMain`：程序入口，获取应用实例句柄→加载图标 / 光标→注册窗口类→创建主窗口→显示 / 更新窗口→启动消息循环（获取、分发消息）
+		- `WinProc`：消息处理，接收并处理窗口相关事件消息，如`WM_LBUTTONDOWN`（鼠标左键按下）、`WM_CREATE`（窗口创建）、`WM_CLOSE`（窗口关闭），根据消息 ID 执行对应逻辑
+		- `ErrorHandler`：错误处理，调用`GetLastError`获取错误码→`FormatMessage`获取系统错误文本→`MessageBox`显示错误信息→`LocalFree`释放错误文本内存
+	- 消息循环示例：
+		```asm
+		Message_Loop: 
+			INVOKE GetMessage, ADDR msg, NULL, NULL, NULL ; 获取消息 
+			.IF eax == 0 jmp Exit_Program ; 无消息则退出 
+			.ENDIF 
+			INVOKE DispatchMessage, ADDR msg ; 分发消息到WinProc 
+			jmp Message_Loop
+		```
+- 动态内存管理：
+	- 在运行时分配和释放内存，避免静态分配的内存浪费，由堆管理
+	- 关键API：
+
+		|函数|功能描述|
+		|---|---|
+		|`GetProcessHeap`|获取当前进程的默认堆句柄，成功存于 EAX，失败返回 NULL|
+		|`HeapAlloc`|从堆分配内存块，成功返回内存地址（EAX），失败返回 NULL|
+		|`HeapCreate`|创建新堆，成功返回新堆句柄（EAX），失败返回 NULL|
+		|`HeapDestroy`|销毁指定堆，成功返回非零值（EAX）|
+		|`HeapFree`|释放堆中已分配的内存块，成功返回非零值|
+		|`HeapReAlloc`|重分配堆内存块（调整大小），成功返回新地址，失败返回 NULL|
+		|`HeapSize`|查询堆内存块大小，成功返回字节数（EAX），失败返回`SIZE_T - 1`|
+
+	- 示例：
+		- 获取/创建堆句柄：
+			```asm
+			HEAP_START = 2000000 ; 2MB 
+			HEAP_MAX = 400000000 ; 400MB 
+			.data 
+				hHeap HANDLE ? 
+			.code 
+				INVOKE GetProcessHeap 
+				.IF eax == NULL 
+					INVOKE HeapCreate, 0, HEAP_START, HEAP_MAX 
+				.ENDIF 
+				mov hHeap, eax
+			```
+		* 分配内存：
+			```asm
+			.data 
+				hHeap HANDLE ? 
+				pArray DWORD ? 
+			.code 
+				INVOKE HeapAlloc, hHeap, HEAP_ZERO_MEMORY, 1000 
+				.IF eax == NULL 
+					; 分配失败处理 、
+				.ELSE 
+					mov pArray, eax 
+				.ENDIF
+			```
+		- 释放内存：
+			```asm
+			INVOKE HeapFree, hHeap, 0, pArray
+			```
