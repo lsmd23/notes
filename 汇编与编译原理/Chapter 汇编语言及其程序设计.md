@@ -885,7 +885,7 @@ END main ; 指定程序入口为main过程
 		- 栈操作改为将栈指针`RSP`向下增长8字节，同时必须保证16字节对齐
 # 条件处理
 ## 布尔量与比较指令
-- [[Chapter 汇编语言#^235954|CPU的状态标志位]]
+- [[Chapter 汇编语言及其程序设计#^235954|CPU的状态标志位]]
 - 布尔运算指令：
 	- `AND`指令：
 		- 语法：`AND destination, source`
@@ -1296,7 +1296,7 @@ END main ; 指定程序入口为main过程
 # 字符串与数组
 ## 字符串及其操作
 - 数据传输指令：`MOVSB`、`MOVSW`、`MOVSD`
-	- 功能：将`ESI`寄存器指向内存位置的数据复制到`EDI`寄存器指向的位置，三个指令分别对应字节（`MOVSB`）、字（`MOVSW`）和双字（`MOVSD`）数据传输
+	- **功能**：将`ESI`寄存器指向内存位置的数据复制到`EDI`寄存器指向的位置，三个指令分别对应字节（`MOVSB`）、字（`MOVSW`）和双字（`MOVSD`）数据传输
 		- `ESI`和`EDI`会根据传输的类型自动递增或递减，幅度为1（`MOVSB`，字节传输）、2（`MOVSW`，字传输）或4（`MOVSD`，双字传输）
 	- 方向控制：由方向标志位（`DF`）控制
 		- `DF=0`：`ESI`和`EDI`递增，适用于从低地址向高地址传输数据，一般由`CLD`指令设置
@@ -1318,7 +1318,7 @@ END main ; 指定程序入口为main过程
 		rep movsd
 		```
 - 比较指令：`CMPSB`、`CMPSW`、`CMPSD`
-	- 功能：比较`ESI`寄存器指向内存位置的数据与`EDI`寄存器指向位置的数据，三个指令分别对应字节（`CMPSB`）、字（`CMPSW`）和双字（`CMPSD`）数据比较
+	- **功能**：比较`ESI`寄存器指向内存位置的数据与`EDI`寄存器指向位置的数据，三个指令分别对应字节（`CMPSB`）、字（`CMPSW`）和双字（`CMPSD`）数据比较
 		- 根据比较结果设置标志寄存器（如零标志ZF、符号标志SF等）
 		- `ESI`和`EDI`会根据比较的类型自动递增或递减，幅度为1（`CMPSB`）、2（`CMPSW`）或4（`CMPSD`）
 	- 方向控制：同样由方向标志位（`DF`）控制
@@ -1355,14 +1355,325 @@ END main ; 指定程序入口为main过程
 		je arrays_equal ; jump if all elements equal
 		```
 - 扫描类指令：`SCASB`、`SCASW`、`SCASD`
-
+	- **功能**：将累加器`AL`、`AX`、`EAX`中的数据与`EDI`寄存器指向内存位置的数据进行比较，三个指令分别对应字节（`SCASB`）、字（`SCASW`）和双字（`SCASD`）数据扫描
+		- 根据比较结果设置标志寄存器
+		- `EDI`会根据扫描的类型自动递增或递减，幅度为1（`SCASB`）、2（`SCASW`）或4（`SCASD`）
+	- 方向控制：同样由方向标志位（`DF`）控制
+	- 应用：在长字符串数组中搜索特定元素，或查找首个与给定值匹配的元素等
+	- 例：在字符串`alpha`中搜索字母`F`
+		```asm
+		.data
+		alpha BYTE "ABCDEFGH",0 
+		
+		.code 
+		mov edi,OFFSET alpha 
+		mov al,'F' ; search for 'F' 
+		mov ecx,LENGTHOF alpha 
+		cld 
+		repne scasb ; repeat while not equal 
+		jnz quit ; 若未找到（ZF=0）则退出 
+		dec edi ; EDI points to 'F'（找到时调整EDI指向目标元素）
+		```
+		其中`JNZ`指令作用为：若未找到目标元素（`ZF = 0`），则跳转至`quit`标签处退出程序
+- 存储类指令：`STOSB`、`STOSW`、`STOSD`
+	- **功能**：将累加器`AL`、`AX`、`EAX`中的数据存储到`EDI`寄存器指向的内存位置，三个指令分别对应字节（`STOSB`）、字（`STOSW`）和双字（`STOSD`）数据存储
+		- `EDI`会根据存储的类型自动递增或递减，幅度为1（`STOSB`）、2（`STOSW`）或4（`STOSD`）
+	- 同样遵循类似的方向控制和重复操作机制
+	- 例：用`0FFh`填充数组`string1`，长度为100个元素
+		```asm
+		.data
+		Count = 100 
+		string1 BYTE Count DUP(?) 
+		
+		.code 
+		mov al,0FFh ; value to be stored 
+		mov edi,OFFSET string1 ; ES:DI points to target 
+		mov ecx,Count ; character count 
+		cld ; direction = forward 
+		rep stosb ; fill with contents of AL
+		```
+- 加载类指令：`LODSB`、`LODSW`、`LODSD`
+	- **功能**：将`ESI`寄存器指向内存位置的数据加载到累加器`AL`、`AX`、`EAX`中，三个指令分别对应字节（`LODSB`）、字（`LODSW`）和双字（`LODSD`）数据加载
+		- `ESI`会根据加载的类型自动递增或递减，幅度为1（`LODSB`）、2（`LODSW`）或4（`LODSD`）
+	- 同样遵循类似的方向控制和重复操作机制
+	- 例：加载数组`array`元素并转换为 ASCII 码后显示
+		```asm
+		.data
+		array BYTE 1,2,3,4,5,6,7,8,9 
+		
+		.code 
+		mov esi,OFFSET array 
+		mov ecx,LENGTHOF array 
+		cld 
+		L1: lodsb ; load byte into AL 
+		or al,30h ; convert to ASCII 
+		call WriteChar ; display it 
+		loop L1
+		```
+- 常用库字符串过程：在`Irvine32`和`Irvine16`库中有以下常用字符串过程：
+	- `Str_compare`：字符串比较过程
+	- `Str_copy`：字符串复制过程
+	- `Str_length`：字符串长度计算过程
+	- `Str_trim`：字符串修剪过程
+	- `Str_ucase`：字符串转换为大写过程
+	- ……
+## 二维数组
+- 基址变址操作数（Base-Index Operand）:
+	- 功能：将两个寄存器——基址寄存器（Base Register）和变址寄存器（Index Register）——的值相加，形成一个有效地址，用于访问数组元素（也可以使用任意的两个32位寄存器）
+	- 应用：访问结构数组中的元素
+	- 例：定义`COORD`结构存储屏幕坐标，创建结构数组并遍历显示`Y`轴坐标
+		```asm
+		.data
+		COORD STRUCT 
+		X WORD ? ; offset 00 
+		Y WORD ? ; offset 02 
+		COORD ENDS 
+		setOfCoordinates COORD 10 DUP(<>) ; 结构数组 
+		
+		.code 
+		mov ebx,OFFSET setOfCoordinates 
+		mov esi,2 ; offset of Y value 
+		mov eax,0 
+		mov ecx,lengthof setOfCoordinates 
+		L1:
+		mov ax,[ebx+esi] 
+		call WriteDec 
+		add ebx,SIZEOF COORD 
+		loop L1
+		```
+- 基址变址位移操作数（Base-Index-Displacement Operand）:
+	- 功能：将基址寄存器、变址寄存器和一个常数位移值相加，形成一个有效地址，用于访问数组元素
+	- 常见格式：`[base + index + displacement]`或`displacement [base + index]`
+		- `base`：基址寄存器，通常指向数组起始位置
+		- `index`：变址寄存器，通常用于索引数组元素
+		- `displacement`：常数位移值，用于调整地址偏移
+	- 常用于32位操作数，对64位也可使用，但使用的是64位的寄存器计算偏移地址
+- 二维数组的定义与访问：
+	- 定义：以3行5列的字节型二维表为例：；
+		```asm
+		.data
+		table BYTE 10h, 20h, 30h, 40h, 50h 
+			  BYTE 60h, 70h, 80h, 90h, 0A0h 
+			  BYTE 0B0h, 0C0h, 0D0h, 0E0h, 0F0h 
+		NumCols = 5
+		```
+		或另一种格式：
+		```asm
+		.data
+		table BYTE 10h,20h,30h,40h,50h,60h,70h,
+					80h,90h,0A0h,
+					0B0h,0C0h,0D0h,
+					0E0h,0F0h
+		NumCols = 5
+		```
+		采用行优先存储，推荐分行定义以增强可读性
+	- 访问：以加载第1行第2列元素为例：
+		- 32位代码：
+			```asm
+			RowNumber = 1 
+			ColumnNumber = 2 
+			mov ebx,NumCols * RowNumber 
+			mov esi,ColumnNumber 
+			mov al,table[ebx + esi]
+			```
+		- 64位代码：
+			```asm
+			RowNumber = 1 
+			ColumnNumber = 2 
+			mov rbx,NumCols * RowNumber 
+			mov rsi,ColumnNumber 
+			mov al,table[rbx + rsi]
+			```
+- 应用实例：[[L13 排序#^391da8|数据结构——冒泡排序]]
+	- 汇编伪代码：
+		```text
+		N = array size, cx1 = outer loop counter, cx2 = inner loop counter: 
+		cx1 = N - 1 
+		while( cx1 > 0 ) 
+		{ 
+			esi = addr(array) 
+			cx2 = cx1 
+			while( cx2 > 0 ) 
+			{ 
+				if( array[esi] < array[esi+4] ) 
+				add esi,4 
+				exchange( array[esi], array[esi+4] ) 
+				dec cx2 
+			} 
+			dec cx1 
+		}
+		```
+	- 代码实现：
+		```asm
+		BubbleSort PROC USES eax ecx esi,
+			pArray:PTR DWORD,
+			Count:DWORD 、
+		
+		mov ecx,Count 
+		dec ecx ; decrement count by 1 
+		L1: 
+		push ecx ; save outer loop count 
+		L2: 
+		mov eax,[esi] 
+		mov esi,pArray ; get array value ; point to first value 
+		cmp [esi+4],eax 
+		jge L3 ; compare a pair of values ; if [esi] <= [edi], skip 
+		xchg eax,[esi+4] ; else exchange the pair 
+		mov [esi],eax 
+		L3: 
+		add esi,4 ; move both pointers forward 
+		loop L2 ; inner loop 
+		pop ecx ; retrieve outer loop count 
+		loop L1 ; else repeat outer loop 
+		L4: 
+		ret 
+		BubbleSort ENDP
+		```
 # 结构体与宏
 ## 结构体
-
-
+- 变量组的模板，其中每个变量称为字段（field），程序既可以作为整体操作结构体变量，也可以单独访问各字段
+	- 使用时，需要先定义，再声明，最后访问
+- 关键语法：
+	- 结构体定义：
+		```asm
+		structureName STRUCT 
+			fieldName1 TYPE1 ; offset 0 
+			fieldName2 TYPE2 ; offset depends on TYPE1 size 
+			... 
+		structureName ENDS
+		```
+		- 例：`COORD`结构体（存储屏幕坐标）
+			```asm
+			COORD STRUCT 
+				X WORD ? ; offset 0 
+				Y WORD ? ; offset 2 
+			COORD ENDS
+			```
+		- 例：`Employee`结构体
+			```asm
+			Employee STRUCT 
+				IdNum BYTE "000000000" ; 9字节（ID号） 
+				LastName BYTE 30 DUP(0) ; 30字节（姓） 
+				Years WORD 0 ; 2字节（工作年限） 
+				SalaryHistory DWORD 0,0,0,0 ; 16字节（薪资历史，4个DWORD） 
+			Employee ENDS ; 总大小57字节
+			```
+	- 结构体变量声明与初始化：
+		- 单个变量：
+			```asm
+			varName structureName <initialValue1, initialValue2, ...>
+			```
+			- 例：
+				```asm
+				myCoord COORD <100, 200> ; 声明并初始化一个COORD结构体变量
+				worker Employee <> ; 使用默认值初始化一个Employee结构体变量
+				emp Employee <,,,2 DUP(20000)> ; 使用数组字段初始化Employee结构体变量，薪资历史前两项设为20000
+				```
+		- 结构体数组：
+			```asm
+			varName structureName COUNT DUP(<initialValue1, initialValue2, ...>)
+			```
+			- 例：
+				```asm
+				RD_Dept Employee 20 DUP(<>)) ; 声明一个包含20个Employee结构体变量的数组，使用默认值初始化
+				accounting Employee 10 DUP(<,,,4 DUP(20000)>) ; 声明一个包含10个Employee结构体变量的数组，薪资历史前四项设为20000
+				```
+    - 结构体字段访问：
+	    - 直接访问字段：
+		    ```asm
+		    mov dx,worker.Years ; 访问worker结构体变量的Years字段
+		    mov worker.SalaryHistory+4,30000 ; 设置第2个薪资历史记录为30000
+		    ```
+		- 间接访问（需指定指针类型）：
+			```asm
+			mov esi,OFFSET worker 
+			mov ax,(Employee PTR [esi]).Years ; 正确：指定Employee指针 
+			; mov ax,[esi].Years ; 错误：地址模糊
+			```
+	- 嵌套结构体定义：
+		- 结构体字段可以是另一个结构体类型，实现嵌套定义，在初始化用嵌套`<>`包裹内部结构体字段的初始值
+		- 例：`Rectangle`结构体，包含两个`COORD`的字段
+			```asm
+			Rectangle STRUCT 
+				UpperLeft COORD <> ; 左上角坐标 
+				LowerRight COORD <> ; 右下角坐标 
+			Rectangle ENDS 
+			; 初始化：rect1 Rectangle < <10,10>, <50,20> >
+			```
+		- 访问嵌套结构体字段：
+			```asm
+			mov rect1.UpperLeft.X, 10 ; 直接访问，设置左上角X坐标
+			
+			mov esi,OFFSET rect1
+			mov (Rectangle PTR [esi]]).LowerRight.Y, 20 ; 间接访问，设置右下角Y坐标
+			```
+- 联合体（Unions）
+	- 区别：结构体的所有字段**偏移不同**，总大小为各字段大小之和；联合体的所有字段**偏移相同**，总大小为最大字段的大小
+	- 定义语法：
+		```asm
+		unionName UNION 
+			fieldName1 TYPE1 ; offset 0 
+			fieldName2 TYPE2 ; offset 0 
+			... 
+		unionName ENDS
+		```
+		- 例：定义4字节的联合体
+			```asm
+			```asm
+			Integer UNION
+			    D DWORD 0   ; 4字节
+			    W WORD 0    ; 2字节
+			    B BYTE 0    ; 1字节
+			Integer ENDS
+			```
+	- 使用示例：必须指定字段名
+		```asm
+		.data
+		val1 Integer <12345678h>
+		.code
+		mov val1.B, al    ; 按字节访问
+		add val1.D, eax   ; 按DWORD访问
+		```
 ## 宏
-
-
+- 命名的汇编语句块，定义后可以多次调用
+	- 在预处理阶段，每个宏都会被展开为对应的汇编代码再检查语法
+	- 定义语法：
+		```asm
+		macroName MACRO [param1 [, param2, ...]]
+			; 汇编语句块
+		ENDM
+		```
+	- 调用语法：
+		```asm
+		macroName [arg1 [, arg2, ...]]
+		```
+		参数按位置传递
+	- 示例
+		- 无参数宏：`mNewLine`换行宏
+			```asm
+			; 定义 
+			mNewLine MACRO 
+				call Crlf ; 调用换行过程 
+			ENDM 
+			
+			; 调用：.code中直接写 mNewLine，展开为 call Crlf
+			```
+		- 有参数宏：`mPutChar`单个字符输出宏
+			```asm
+			; 定义（保护eax寄存器） 
+			mPutchar MACRO char 
+				push eax 
+				mov al,char ; char为形参，调用时被实参替换 
+				call WriteChar 
+				pop eax 
+			ENDM 
+			
+			; 调用：mPutchar 'A'，展开为： 
+			; push eax → mov al,'A' → call WriteChar → pop eax
+			```
 
 
 # Windows API 编程
+## Windows控制台编程
+
+## Windows图形界面编程
