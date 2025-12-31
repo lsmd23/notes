@@ -1169,16 +1169,198 @@ END main ; 指定程序入口为main过程
 	- 创建过程：
 		- 调用者（caller）负责将参数压入栈
 		- 被调用者（callee）负责将基指针压入栈，设置新的基指针，并为局部变量分配空间
-
-
-
+		- 对局部变量分配，需要对`ESP`减去固定的值以预留空间
+- 参数传递：
+	- 使用栈传递参数无需占用寄存器，适用于参数较多的情况
+	- 在调用时，直接使用`PUSH`和`POP`指令进行参数传递
+	- 传值方式：
+		- 传递参数值：
+			1. 向栈中压入参数值：`PUSH value`
+			2. 调用过程：`CALL procedure`，在返回值寄存器（一般为`EAX`）中存储结果
+			3. 清理栈空间：`ADD ESP, numBytes`，其中`numBytes`为参数总字节数
+		- 传递引用（地址）：
+			1. 向栈中压入参数偏移量：`PUSH OFFSET variable`
+			2. 调用过程：`CALL procedure`，在返回值寄存器中存储结果
+			3. 清理栈空间：`ADD ESP, numBytes`，其中`numBytes`为参数总字节数
+- 局部变量维护：
+	- 局部变量仅在过程内部有效，过程结束后自动释放。由于局部变量存储在栈空间，因此支持递归的重名局部变量
+	- 创建方式：
+		- 操作`ESP`：直接对`ESP`寄存器进行减法操作以分配空间，之后通过栈基址指针`EBP`访问
+		- 使用`LOCAL`指令：
+			- 语法：`LOCAL varName1:type1, varName2:type2, ...`
+			- 功能：声明局部变量，MASM 自动为其分配栈空间
+			- 示例：
+				```asm
+				MyProcedure PROC 
+				 LOCAL var1:DWORD, var2:BYTE 
+				 ; 过程代码 
+				 ret 
+				MyProcedure ENDP
+				```
+- 关键指令：
+	- `ENTER`指令：
+		- 功能：创建栈帧，保存调用者的基指针，设置新的基指针，并为局部变量分配空间
+		- 语法：`ENTER size, nestingLevel`
+			- `size`：为局部变量分配的字节数
+			- `nestingLevel`：嵌套级别，通常为0
+		- 等价于以下指令序列：
+			```asm
+			push ebp ; 保存调用者的基指针 
+			mov ebp, esp ; 设置新的基指针 
+			sub esp, size ; 为局部变量分配空间
+			```
+	- `LEAVE`指令：
+		- 功能：销毁栈帧，恢复调用者的基指针，并释放局部变量空间
+		- 语法：`LEAVE`
+		- 等价于以下指令序列：
+			```asm
+			mov esp, ebp ; 恢复栈指针 
+			pop ebp ; 恢复调用者的基指针
+			```
+	- `RET`指令：
+		- 功能：从子过程返回到调用点，弹出返回地址并跳转
+		- 语法：`RET`或`RET numBytes`
+			- `numBytes`：可选参数，指定返回后从栈中移除的字节数（用于清理参数）
+- 调用约定：参见[[L2.3 机器指令-过程#^80e357|计算机组成原理——寄存器保存约定]]
+	- C调用：调用者清理栈
+		- 被调用过程使用`RET`指令返回
+		- 调用者负责清理栈空间
+	- STDCall调用：被调用者清理栈
+		- 被调用过程使用`RET numBytes`指令返回
+		- 被调用者负责清理栈空间
+## 多过程编程
+- 关键指令：仅支持32位模式
+	- `INVOKE`指令：
+		- 功能：替代`CALL`指令，简化过程调用和参数传递
+		- 语法：`INVOKE procedure, arg1, arg2, ...`
+			- `procedure`：被调用过程的名称
+			- `arg1, arg2, ...`：传递给过程的参数，可以是立即数、寄存器或变量
+	- `ADDR`指令：
+		- 功能：获取变量或数组元素的地址
+		- 语法：`ADDR variable`或`ADDR array[index]`
+			- `variable`：变量名称
+			- `array[index]`：数组元素，通过索引访问
+	- `PROC`指令：
+		- 功能：定义过程，指定过程名称和调用约定
+		- 语法：`label PROC [attributes] [USES regList], paramList`
+			- `label`：过程名称
+			- `attributes`：可选属性，如`NEAR`或`FAR`
+			- `regList`：可选寄存器列表，指定过程使用的寄存器
+			- `paramList`：可选参数列表，指定过程参数及其类型：`paramName: type`
+		- 例：
+			```asm
+			AddTwo PROC, 
+				val1:DWORD, val2:DWORD 
+				
+				mov eax,val1 
+				add eax,val2 
+				ret 
+				
+			AddTwo ENDP
+			```
+	- `PROTO`指令：
+		- 功能：声明过程原型，指定过程名称和参数类型
+		- 语法：`label PROTO [attributes], paramList`
+			- `label`：过程名称
+			- `attributes`：可选属性，如`NEAR`或`FAR`
+			- `paramList`：参数列表，指定过程参数及其类型
+			- **需要在`INVOKE`指令前声明过程原型**
+		- 例：
+			```asm
+			AddTwo PROTO, 
+				val1:DWORD, val2:DWORD
+			
+			; 过程实现
+			INVOKE AddTwo, 5, 10
+			
+			; 过程实现
+			AddTwo PROC, 
+				val1:DWORD, val2:DWORD 
+				
+				mov eax,val1 
+				add eax,val2 
+				ret
+			AddTwo ENDP
+			```
+- 过程调用参数类型：
+	- 输入参数：调用者传递给被调用者的值，过程内不可修改或仅限于局部修改
+	- 输出参数：被调用者通过参数返回值给调用者，通常通过指针或引用传递，不使用原有值
+	- 输入输出参数：既传递给被调用者，又由被调用者返回给调用者，通常通过指针或引用传递，过程享有对原有值的读写权限
+- 多模块汇编语言编程：
+	- 工作流程：源汇编代码拆分到多个`.asm`文件中，由汇编器将各模块汇编为`.obj`目标文件，再由链接器将目标文件链接为单个`.exe`可执行文件
+	- 步骤：
+		1. 编写表示程序入口的主模块（如`main.asm`）
+		2. 编写其他功能模块（如`module1.asm`、`module2.asm`）
+		3. 生成包含外部过程原型的头文件（如`module1.inc`、`module2.inc`）
+		4. 各模块使用`INCLUDE`指令包含头文件，确保过程原型可见
 # 字符串与数组
-
-
-
+## 字符串及其操作
+- 数据传输指令：`MOVSB`、`MOVSW`、`MOVSD`
+	- 功能：将`ESI`寄存器指向内存位置的数据复制到`EDI`寄存器指向的位置，三个指令分别对应字节（`MOVSB`）、字（`MOVSW`）和双字（`MOVSD`）数据传输
+		- `ESI`和`EDI`会根据传输的类型自动递增或递减，幅度为1（`MOVSB`，字节传输）、2（`MOVSW`，字传输）或4（`MOVSD`，双字传输）
+	- 方向控制：由方向标志位（`DF`）控制
+		- `DF=0`：`ESI`和`EDI`递增，适用于从低地址向高地址传输数据，一般由`CLD`指令设置
+		- `DF=1`：`ESI`和`EDI`递减，适用于从高地址向低地址传输数据，一般由`STD`指令设置
+	- 重复操作：结合`REP`前缀指令使用，可实现批量数据传输
+		- 语法：`REP MOVSB`、`REP MOVSW`、`REP MOVSD`
+		- 功能：根据`ECX`寄存器的值重复执行数据传输操作，直到`ECX`减为0
+	- 例：
+		```asm
+		.data
+		source DWORD 20 DUP('z')
+		target DWORD 20 DUP(?)
+		
+		.code
+		cld ; direction = forward
+		mov ecx,LENGTHOF source ; set REP counter
+		mov esi,OFFSET source
+		mov edi,OFFSET target
+		rep movsd
+		```
+- 比较指令：`CMPSB`、`CMPSW`、`CMPSD`
+	- 功能：比较`ESI`寄存器指向内存位置的数据与`EDI`寄存器指向位置的数据，三个指令分别对应字节（`CMPSB`）、字（`CMPSW`）和双字（`CMPSD`）数据比较
+		- 根据比较结果设置标志寄存器（如零标志ZF、符号标志SF等）
+		- `ESI`和`EDI`会根据比较的类型自动递增或递减，幅度为1（`CMPSB`）、2（`CMPSW`）或4（`CMPSD`）
+	- 方向控制：同样由方向标志位（`DF`）控制
+		- `DF=0`：`ESI`和`EDI`递增，适用于从低地址向高地址比较数据
+		- `DF=1`：`ESI`和`EDI`递减，适用于从高地址向低地址比较数据
+	- 重复操作：结合`REPE/REPZ`或`REPNE/REPNZ`前缀指令使用，可实现批量数据比较
+		- `REPE/REPZ CMPSx`：在相等条件下重复比较，直到不相等或`ECX`减为0
+		- `REPNE/REPNZ CMPSx`：在不相等条件下重复比较，直到相等或`ECX`减为0
+	- 例：比较单个双字数据，若源双字大于目标双字则跳至`L1`，否则跳至`L2`
+		```asm
+		.data
+		source DWORD 1234h 
+		target DWORD 5678h 
+		
+		.code 
+		mov esi,OFFSET source 
+		mov edi,OFFSET target 
+		cmpsd ; compare doublewords 
+		ja L1 ; jump if source > target 
+		jmp L2 ; jump if source <= target
+		```
+		比较数组元素：用`REPE`前缀比较两个数组的对应元素
+		```asm
+		.data
+		source DWORD COUNT DUP(?) 
+		target DWORD COUNT DUP(?) 
+		
+		.code 
+		mov ecx,COUNT ; repetition count 
+		mov esi,OFFSET source 
+		mov edi,OFFSET target 
+		cld 
+		repe cmpsd ; direction = forward ; repeat while equal
+		je arrays_equal ; jump if all elements equal
+		```
+- 扫描类指令：`SCASB`、`SCASW`、`SCASD`
 
 # 结构体与宏
+## 结构体
 
+
+## 宏
 
 
 
