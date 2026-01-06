@@ -64,7 +64,8 @@
 ; Program Template (Template.asm) 
 .386 ; 指定使用80386处理器指令集 
 .model flat,stdcall ; 定义内存模型为flat，调用约定为stdcall 
-.stack 4096 ; 分配4096字节的栈空间 ExitProcess PROTO, dwExitCode:DWORD ; 声明ExitProcess函数原型 
+.stack 4096 ; 分配4096字节的栈空间 
+ExitProcess PROTO, dwExitCode:DWORD ; 声明ExitProcess函数原型 
 
 .data ; 数据段，用于声明变量 
 ; declare variables here 
@@ -95,7 +96,7 @@ END main ; 指定程序入口为main过程
 	- 指令：
 		- 汇编语言的核心，用于执行具体操作
 		- 包括数据传输指令、算术运算指令、逻辑运算指令、控制转移指令等
-		- 结构：\[标签:\] 操作码 操作数(s) ; 注释\]
+		- 结构：\[标签:\] 操作码 操作数(s) ; 注释
 	- 标签：
 		- 用于标识代码或数据的位置
 		- 以冒号结尾，可作为跳转目标或数据引用
