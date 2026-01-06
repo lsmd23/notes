@@ -558,7 +558,7 @@ END main ; 指定程序入口为main过程
 		 mov esi,OFFSET dVal2 ; ESI = 00404007（dVal占4字节，dVal2在其之后）
 		```
 - `PTR`运算符：
-	- 语法：`PTR TYPE name`
+	- 语法：`TYPE PTR name`
 	- 功能：用于覆盖标签（变量）的默认类型，灵活访问其内容
 	- 例：一个双字变量的不同访问方式
 		```asm
