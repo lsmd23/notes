@@ -18,13 +18,13 @@ LDM 将生成过程分解为：**第一阶段自编码器 (Autoencoder)** 提供
 ## 3. 关键数学推导与训练目标
 ### 3.1 潜在扩散目标函数
 LDM 的核心训练目标是在潜在空间最小化噪声预测误差：
-$$L_{LDM} := \mathbb{E}_{\mathcal{E}(x), \epsilon \sim \mathcal{N}(0,1), t} \left[ \| [cite_start]\epsilon - \epsilon_{\theta}(z_t, t) \|_2^2 \right]$$
+$$L_{LDM} := \mathbb{E}_{\mathcal{E}(x), \epsilon \sim \mathcal{N}(0,1), t} \left[ \| \epsilon - \epsilon_{\theta}(z_t, t) \|_2^2 \right]$$
 - **$z_t$**：由编码后的潜在表示 $z$ 在时间步 $t$ 加入噪声得到。
 - **$\epsilon$**：实际加入的噪声，服从标准正态分布 $\mathcal{N}(0,1)$。
 - **$\epsilon_{\theta}(z_t, t)$**：UNet 模型预测的噪声。
 ### 3.2 引入条件调节 (Conditioning)
 为了实现文本到图像等控制，加入调节因子 $y$ 和编码器 $\tau_{\theta}$：
-$$L_{LDM} := \mathbb{E}_{\mathcal{E}(x), y, \epsilon \sim \mathcal{N}(0,1), t} \left[ \| [cite_start]\epsilon - \epsilon_{\theta}(z_t, t, \tau_{\theta}(y)) \|_2^2 \right]$$
+$$L_{LDM} := \mathbb{E}_{\mathcal{E}(x), y, \epsilon \sim \mathcal{N}(0,1), t} \left[ \| \epsilon - \epsilon_{\theta}(z_t, t, \tau_{\theta}(y)) \|_2^2 \right]$$
 **Cross-Attention 计算过程**： UNet 的中间表示 $\varphi_i(z_t)$ 作为查询 (Query)，调节输入作为键 (Key) 和值 (Value) ：
 - $Q = W_Q^{(i)} \cdot \varphi_i(z_t)$
 - $K = W_K^{(i)} \cdot \tau_{\theta}(y)$
@@ -51,3 +51,4 @@ $$L_{LDM} := \mathbb{E}_{\mathcal{E}(x), y, \epsilon \sim \mathcal{N}(0,1), t} \
 	- 压缩的比例或许需要实验来验证和调整
 - 文献在**latent**上做训练和生成，而不是直接在像素空间上进行训练和生成，这样可以**降低计算资源的需求**，同时保持生成图像的质量。
     - 这种方法可能适用于其他类型的数据，如音频、文本等
+- *对气象场建模，是否需要对不同维度的预测进行不同维度的压缩，还是一个简单的先后顺序可以解决的问题？*
