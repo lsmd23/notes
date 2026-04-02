@@ -38,6 +38,9 @@ $$\nabla_{z_\lambda}\log p^i(c|z_\lambda)=-\frac{1}{\sigma_\lambda}[\epsilon^*(z
 
 $$\tilde{\epsilon}_\theta(z_\lambda,c)=(1+w)\epsilon_\theta(z_\lambda,c)-w\epsilon_\theta(z_\lambda)$$
 其中 $w$ 为引导强度，$\epsilon_\theta(z_\lambda,c)$ 为条件得分，$\epsilon_\theta(z_\lambda)$ 为无条件得分。该公式通过将预测推向条件得分的同时远离无条件得分，增强了条件的影响。
+**可参考的原始文献**：
+- [[基于扩散的无监督学习：扩散模型的基本原理]]
+- 
 ## 五、 实验结果与启示
 - **有效平衡保真度与多样性**：通过调整引导权重 $w$，模型可以像 GAN 的截断机制一样，完美再现 IS (Inception Score，衡量图像清晰度) 和 FID (衡量分布距离) 之间的权衡曲线。小权重的 $w$ 即可达到最优 FID，强引导能极大提高 IS 并导致颜色和特征的饱和。
 - **纯生成模型的能力验证**：实验证明，纯扩散生成模型（神经网络不一定构成保守矢量场）在没有额外分类器参与的情况下，依然能够极大优化基于分类器的评价指标。彻底排除了原先“对抗攻击欺骗指标”的猜想。
