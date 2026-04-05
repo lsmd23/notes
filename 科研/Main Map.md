@@ -7,5 +7,6 @@
 # Video
 - [[CogVideoX：借助Expert-AdaLN的视频生成模型]]
 - [[HunyuanVideo：系统性的视频模型框架]]
-- 
+- [[WAN：采用交叉注意力的视频生成模型]]
 # Exploration
+- 
