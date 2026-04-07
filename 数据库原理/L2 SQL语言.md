@@ -81,3 +81,14 @@
 				foreign key (course_id, sec_id, semester, year) references section 
 			);
 			```
+- 删表与改表语句：
+	- 删表语句：`DROP TABLE r`（`r`为表名）
+		- 注：`DROP`语句会**删除整个表的数据以及表的结构**，而`DELETE`语句只会删除表中的数据，表结构仍然存在
+	- 改表语句：
+		- 新增列：`ALTER TABLE r ADD A D`
+			- `A`：新增的属性名
+			- `D`：新增属性的数据类型
+			- 注：此时，表中现有元组的新列默认值为`NULL`
+		- 删除列：`ALTER TABLE r DROP A`
+			- `A`：要删除的属性名
+			- 有些数据库不支持删除列，因为列可能有约束或依赖关系
