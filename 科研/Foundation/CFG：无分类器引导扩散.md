@@ -37,7 +37,7 @@ $$\nabla_{z_\lambda}\log p^i(c|z_\lambda)=-\frac{1}{\sigma_\lambda}[\epsilon^*(z
 将其代入带权重的引导得分公式 $\tilde{\epsilon}_\theta = \epsilon_\theta(z_\lambda,c) - w\sigma_\lambda\nabla_{z_\lambda}\log p(c|z_\lambda)$，得到最终 CFG 的采样更新方向：
 
 $$\tilde{\epsilon}_\theta(z_\lambda,c)=(1+w)\epsilon_\theta(z_\lambda,c)-w\epsilon_\theta(z_\lambda)$$
-其中 $w$ 为引导强度，$\epsilon_\theta(z_\lambda,c)$ 为条件得分，$\epsilon_\theta(z_\lambda)$ 为无条件得分。该公式通过将预测推向条件得分的同时远离无条件得分，增强了条件的影响。
+其中 $w$ 为==引导强度==（**计算指标时取较小值，show case时较大**），$\epsilon_\theta(z_\lambda,c)$ 为条件得分，$\epsilon_\theta(z_\lambda)$ 为无条件得分。该公式通过将预测推向条件得分的同时远离无条件得分，增强了条件的影响。
 **可参考的原始文献**：
 - [[基于扩散的无监督学习：扩散模型的基本原理]]
 - [[VDM：变分扩散模型]]
