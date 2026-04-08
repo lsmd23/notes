@@ -92,3 +92,41 @@
 		- 删除列：`ALTER TABLE r DROP A`
 			- `A`：要删除的属性名
 			- 有些数据库不支持删除列，因为列可能有约束或依赖关系
+- 表结构的存储：
+	- 数据字典：数据库的元数据中枢，用于存储所有数据库对象的结构信息，也被称为系统目录（system catalog）或系统表（system tables）
+		- 在PostgreSQL中，可以通过路径：`Catalogs -> pg_catalog -> Tables`查找系统表，同时提供标准的`information_schema`视图来查询表结构信息，包括：
+			- `pg_class`：存储表、视图、序列等关系对象的元数据
+			- `pg_attribute`：存储表的属性（列）的元数据
+			- `pg_database`：存储所有数据库的全局信息
+			- `pg_namespace`：存储命名空间（schema）的信息
+	- 数据库表的层次结构：
+		- 以PostgreSQL为例，数据库对象的层次结构如下：![[Pasted image 20260408154914.png]]
+            - DBMS Instance：数据库管理系统实例，包含多个数据库，全局角色和全局表空间等
+            - Catalog：数据库，实例下的独立逻辑单元，不同catalog下的数据库是物理隔离的
+            - Schema：Database下的逻辑分组，用于隔离用户对象
+            - Relation：Schema下的表、视图等关系对象
+    - 数据库和表目录操作
+	    - 数据库操作：
+		    - 创建数据库：`CREATE DATABASE db_name`
+            - 删除数据库：`DROP DATABASE db_name`
+        - 表目录操作：
+	        - 创建模式：`CREATE SCHEMA [schema_name] [AUTHORIZATION user_name]`
+            - 删除模式：`DROP SCHEMA [schema_name] [CASCADE | RESTRICT]`
+# SQL查询基本结构
+- 数据操作语言（DML）：用于访问和操作数据库中数据的语言，也叫查询语言（query language）
+	- 过程式查询语言（Procedural Query Language）：需要用户指定访问数据的具体步骤和方法
+	- 非过程式查询语言（Non-Procedural Query Language）：用户只需指定需要什么数据，数据库系统会自动决定如何获取数据
+- 基本结构：
+    ```sql
+    SELECT A₁, A₂, ..., Aₙ 
+    FROM R₁, R₂, ..., Rₘ
+    WHERE P;
+    ```
+    - 说明：
+	    - `A₁, A₂, ..., Aₙ`：要查询的属性列表，可以是具体属性，也可以是`*`表示所有属性
+	    - `R₁, R₂, ..., Rₘ`：要查询的关系（表）列表，可以是一个或多个关系
+	    - `P`：查询条件，使用布尔表达式来指定筛选数据
+	    - 对应的关系代数：$\Pi_{A₁, A₂, ..., Aₙ}(\sigma_P(R₁ \times R₂ \times ... \times Rₘ))$
+		- 注：SQL语句中的关系指**多重集合**，而关系代数中的关系指**集合**，因此SQL查询结果可能包含重复的元组，而关系代数查询结果不包含重复的元组
+			- 例：![[Pasted image 20260408160732.png]]
+	- 
