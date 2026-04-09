@@ -129,4 +129,17 @@
 	    - 对应的关系代数：$\Pi_{A₁, A₂, ..., Aₙ}(\sigma_P(R₁ \times R₂ \times ... \times Rₘ))$
 		- 注：SQL语句中的关系指**多重集合**，而关系代数中的关系指**集合**，因此SQL查询结果可能包含重复的元组，而关系代数查询结果不包含重复的元组
 			- 例：![[Pasted image 20260408160732.png]]
-	- 
+	- `SELECT`子句：对应投影操作，指定查询结果需要的列
+		- 基础：`SELECT name FROM student;`，投影学生表中的`name`列
+		- 去重：`SELECT DISTINCT name FROM student;`，去重后投影学生表中的`name`列
+		- 留重：`SELECT ALL name FROM student;`，保留重复值投影学生表中的`name`列（默认行为）
+		- 通配符`*`：`SELECT * FROM student;`，投影学生表中的所有列
+		- 常量：
+			- 无`FROM`：`SELECT 'Hello World' AS greeting;`，查询结果为一行一列，列名为`greeting`，值为`Hello World`
+            - 有`FROM`：`SELECT 'Hello World' AS greeting FROM student;`，查询结果为与学生表中行数相同的多行，每行的`greeting`列值为`Hello World`
+    - `FROM`子句：对应笛卡尔积操作，指定查询涉及的表
+	    - `SELECT * FROM instructor, teaches`，查询`instructor`表和`teaches`表的笛卡尔积
+	    - 同名属性需要用表名限定：`SELECT instructor.name, teaches.name FROM instructor, teaches;`，查询`instructor`表的`name`列和`teaches`表的`course_id`列
+	- `WHERE`子句：对应选择操作，指定查询的筛选条件
+        - 基础：`SELECT * FROM student WHERE dept_name = 'CS';`，查询学生表中`dept_name`为`CS`的所有列
+        - 复杂条件：`SELECT * FROM student WHERE dept_name = 'CS' AND tot_cred > 30;`，查询学生表中`dept_name`为`CS`且`tot_cred`大于30的所有列
