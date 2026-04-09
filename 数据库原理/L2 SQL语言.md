@@ -143,3 +143,5 @@
 	- `WHERE`子句：对应选择操作，指定查询的筛选条件
         - 基础：`SELECT * FROM student WHERE dept_name = 'CS';`，查询学生表中`dept_name`为`CS`的所有列
         - 复杂条件：`SELECT * FROM student WHERE dept_name = 'CS' AND tot_cred > 30;`，查询学生表中`dept_name`为`CS`且`tot_cred`大于30的所有列
+# 附加操作与空值
+- 换名操作（Renaming）：
