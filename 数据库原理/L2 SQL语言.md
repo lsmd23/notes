@@ -144,4 +144,102 @@
         - 基础：`SELECT * FROM student WHERE dept_name = 'CS';`，查询学生表中`dept_name`为`CS`的所有列
         - 复杂条件：`SELECT * FROM student WHERE dept_name = 'CS' AND tot_cred > 30;`，查询学生表中`dept_name`为`CS`且`tot_cred`大于30的所有列
 # 附加操作与空值
-- 换名操作（Renaming）：
+- 换名操作（Renaming）：`AS`语句
+	- 用法：`[old_name] AS [new_name]`
+	- `AS`语句用于给表、列更换别名，`AS`在语句中是可选的
+		- 例：`instructor AS i`，给`instructor`表起别名`i`，也可直接写作`instructor i`
+	- 常与`SELECT`操作结合使用，解决表名/列名冲突问题
+        - 例：`SELECT i.name, t.course_id FROM instructor AS i, teaches AS t WHERE i.ID = t.ID;`，查询`instructor`表和`teaches`表的连接结果，使用别名`i`和`t`来区分同名属性
+- 字符串运算（函数）：`LIKE`操作
+	- `LIKE`用于在`WHERE`子句中进行字符串模式匹配
+		- 通配符`%`：匹配任意长度的字符串（包括空字符串）
+		- 通配符`_`：匹配任意单个字符
+		- 转义字符：如果需要匹配`%`或`_`本身，可以使用转义字符（如`\`）进行转义
+		- 模式匹配是**严格区分大小写**的
+		- 其他操作：连接`||`，大小写转换函数`UPPER()`和`LOWER()`，取长度，取子串等
+			- 例：`SELECT name FROM student WHERE name LIKE 'A%';`，查询学生表中`name`以`A`开头的所有名字
+- 结果集中元组的顺序：`Order By`子句
+	- 用法：`ORDER BY [column_name] [ASC|DESC]`
+    - `ORDER BY`用于指定查询结果的排序方式，默认是升序（`ASC`），也可以指定为降序（`DESC`）
+    - 可以指定多个排序列，按照优先级进行排序
+        - 例：`SELECT name, salary FROM instructor ORDER BY salary DESC, name ASC;`，查询教师表中的名字和工资，并按照工资降序排序，如果工资相同则按照名字升序排序
+    - 可以与`DISTINCT`一起使用，先去重再排序
+        - 例：`SELECT DISTINCT dept_name FROM instructor ORDER BY dept_name;`，查询教师表中不同的部门名字，并按照部门名字升序排序
+- `WHERE`子句的条件：`BETWEEN`与元组比较
+	- `BETWEEN`操作：
+		- `BETWEEN`用于指定一个范围
+		- 用法：`[column_name] BETWEEN [lower_bound] AND [upper_bound]`
+	    - `BETWEEN`包含边界值，即`lower_bound`和`upper_bound
+	- 元组比较：
+		- 多列同时匹配
+		- 例：`select name, course_id  from instructor, teaches where (instructor.ID, dept_name) = (teaches.ID, 'Biology'); 50`，查询教师表和选课表中教师ID和部门名字同时满足条件的记录，即查询教授生物课程的教师名字和课程ID
+- 空值：
+	- 定义：空值（NULL）表示未知或不存在的值
+	- 运算规则：
+        - 任何与NULL进行的算术运算结果都是NULL
+        - 任何与NULL进行的比较运算结果都是NULL（即未知）
+    - 空值判断：必须用`IS NULL`或`IS NOT NULL`来判断是否为空值
+        - 例：`SELECT name FROM student WHERE tot_cred IS NULL;`，查询学生表中`tot_cred`列值为NULL的学生名字
+- 三值逻辑：
+    - SQL中的布尔逻辑包括三种值：`TRUE`、`FALSE`和`UNKNOWN`（即NULL）
+    - 逻辑运算：
+
+		|运算|规则|
+		|---|---|
+		|OR|`unknown or true = true`；`unknown or false = unknown`；`unknown or unknown = unknown`|
+		|AND|`true and unknown = unknown`；`false and unknown = false`；`unknown and unknown = unknown`|
+		|NOT|`not unknown = unknown`|
+    - 在`WHERE`子句中，只有当条件结果为`TRUE`时才会返回记录，`UNKNOWN`和`FALSE`都会被过滤掉
+# 复杂SQL
+## 集合操作
+- 基础集合操作：操作结果自动去重
+	- `UNION`：返回两个查询结果的并集
+    - `INTERSECT`：返回两个查询结果的交集
+    - `EXCEPT`：返回第一个查询结果中存在但第二个查询结果中不存在的记录
+	- 例：`SELECT dept_name FROM instructor UNION SELECT dept_name FROM student;`，查询教师表和学生表中所有不同的部门名字
+- 留重集合操作：保留重复记录
+	- `UNION ALL`：返回两个查询结果的并集，保留重复记录
+    - `INTERSECT ALL`：返回两个查询结果的交集，保留重复记录
+    - `EXCEPT ALL`：返回第一个查询结果中存在但第二个查询结果中不存在的记录，保留重复记录
+    - 例：`SELECT dept_name FROM instructor UNION ALL SELECT dept_name FROM student;`，查询教师表和学生表中所有部门名字，包括重复的部门名字
+## 聚合操作
+- 对列的多重集合值进行统计计算的操作
+- 核心聚合函数：
+	- 
+	|函数|含义|适用类型|特殊说明|
+	|---|---|---|---|
+	|`MAX()`|最大值|数值 / 字符串 / 日期|字符串按字典序、日期按时间序|
+	|`MIN()`|最小值|数值 / 字符串 / 日期|同上|
+	|`AVG()`|平均值|仅数值|自动忽略 `NULL`|
+	|`SUM()`|求和|仅数值|自动忽略 `NULL`|
+	|`COUNT()`|计数|任意类型|`COUNT(列)` 忽略 NULL；`COUNT(*)` 统计行数|
+	- 例：
+		```sql
+		-- 1. 查音乐系教师平均工资 
+		select avg(salary) from instructor where dept_name = 'Music'; 
+		-- 2. 查2018春授课的教师总数（去重ID） 
+		select count(distinct ID) from teaches where semester = 'Spring' and year = 2018; 
+		-- 3. 查course表总记录数 
+		select count(*) from course;
+		```
+- 分组统计：`GROUP BY`子句
+    - 用法：`GROUP BY [column_name1], [column_name2], ...`
+    - `GROUP BY`用于将查询结果按照一个或多个列进行分组，然后对每个分组应用聚合函数
+	    - 例：按系别查找平均工资
+            ```sql
+			select dept_name, avg(salary) as avg_salary 
+			from instructor 
+			group by dept_name;
+            ```
+    * 规则：`SELECT`中非聚合函数的列，必须出现在`GROUP BY`子句中
+        - 例：`SELECT dept_name, salary FROM instructor GROUP BY dept_name;`，错误示例，`salary`列既不是聚合函数的参数，也没有出现在`GROUP BY`子句中
+- 分组后筛选：`HAVING`子句
+    - 用法：`HAVING [condition]`
+    - `HAVING`用于对分组后的结果进行筛选，条件通常涉及聚合函数
+        - 例：查平均工资超过80000的系别
+            ```sql
+            select dept_name, avg(salary) as avg_salary 
+            from instructor 
+            group by dept_name 
+            having avg(salary) > 80000;
+            ```
