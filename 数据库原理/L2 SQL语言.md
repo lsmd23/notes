@@ -222,6 +222,11 @@
 		-- 3. 查course表总记录数 
 		select count(*) from course;
 		```
+	- 对`NULL`值的处理：
+		- 除`COUNT(*)`外，自动忽略`NULL`值进行计算；`COUNT(*)`统计行数，包括`NULL`值所在的行
+		- 若待聚合集合仅有`NULL`值：
+			- `COUNT`函数返回0
+			- 其他聚合函数返回`NULL`
 - 分组统计：`GROUP BY`子句
     - 用法：`GROUP BY [column_name1], [column_name2], ...`
     - `GROUP BY`用于将查询结果按照一个或多个列进行分组，然后对每个分组应用聚合函数
@@ -243,3 +248,64 @@
             group by dept_name 
             having avg(salary) > 80000;
             ```
+## 嵌套子查询
+- 嵌套在另一个SQL查询中的`SELECT FROM WHERE`子句表达式，也称为子查询（Nested Subquery）
+### `WHERE`子句中的子查询
+- 用于在筛选条件中执行集合相关操作判断
+- 集合成员判断（`in`/`not in`）：
+    - 功能：判断元素/元组是否属于查询返回的集合
+    - 语法：
+        ```sql
+        [column_name] IN (SELECT [column_name] FROM [table_name] WHERE [condition])
+        ```
+    - 例：`SELECT name FROM student WHERE dept_name IN (SELECT dept_name FROM instructor WHERE salary > 80000);`，查询学生表中部门名字属于教师表中工资超过80000的部门名字的学生名字
+- 集合比较（`some`/`all`）
+	- `some`（等价于`any`）：与集合中至少一个元素满足比较关系
+		- 逻辑：`F <comp> some r`$\Leftrightarrow \exists t \in r$使得`F <comp> t`，其中`<comp>`是比较运算符，如`<`、`>`、`=`等
+		- 等价关系：
+			- `= some`$\Leftrightarrow$`in`
+			- `≠ some`不等价于`not in`，因为`not in`要求集合中没有任何元素满足条件，而`≠ some`只要求至少一个元素不满足条件
+	- `all`：与集合中所有元素满足比较关系
+        - 逻辑：`F <comp> all r`$\Leftrightarrow \forall t \in r$使得`F <comp> t`
+        - 等价关系：
+            - `= all`不等价于`in`，因为`in`要求至少一个元素满足条件，而`= all`要求所有元素都满足条件
+            - `≠ all`$\Leftrightarrow$`not in`
+    - 例：
+	    - 查询薪资高于生物系**任意**教师的教师：`salary > some (select salary from instructor where dept_name='Biology')`
+		- 查询资产高于布鲁克林**所有**支行的支行：`assets > all (select assets from branch where branch_city='Brooklyn')`
+- 空关系测试（`exists`/`not exists`）：
+    - 功能：判断子查询返回的关系是否为空
+	    - `exists r`：子查询非空，返回`true`
+	    - `not exists r`：子查询为空，返回`true`
+    - 语法：
+        ```sql
+        EXISTS (SELECT [column_name] FROM [table_name] WHERE [condition])
+        ```
+    - 关联子查询（Correlated Subquery）：子查询中的条件引用了外层查询的列，子查询的结果依赖于外层查询的当前行
+        - 例：`SELECT name FROM student s WHERE EXISTS (SELECT * FROM takes t WHERE t.ID = s.ID AND t.grade = 'A');`，查询学生表中至少选修过一门课程并且成绩为A的学生名字
+- 重复元组测试（`unique`）
+	- 功能：判断子查询返回的关系是否包含重复元组
+    - 语法：
+        ```sql
+        UNIQUE (SELECT [column_name] FROM [table_name] WHERE [condition])
+        ```
+    - 例：`SELECT T.course_id FROM course as T WHERE UNIQUE (SELECT R.course_id FROM section AS R WHERE T.course_id = R.course_id AND R.year = 2017);`，查询课程表中在2017年至多开设过一次的课程ID
+    - 注：目前`UNIQUE`并未被广泛支持，实际使用中可以通过`GROUP BY`和`HAVING COUNT(*) = 1`来实现类似的功能
+### `FROM`子句中的子查询
+- 功能：将子查询的结果作为临时表，参与外层查询的计算
+	- **必须为子查询的结果定义一个别名**，以便在外层查询中引用
+	- 例：
+		- `having`写法：
+			```sql
+select dept_name, avg(salary) 
+from instructor 
+group by dept_name 
+having avg(salary)>42000;
+			```
+		* 子查询写法：
+            ```sql
+select dept_name, avg_salary 
+from (select dept_name, avg(salary) as avg_salary from instructor group by dept_name) as dept_avg 
+where avg_salary > 42000;
+            ```
+### `
