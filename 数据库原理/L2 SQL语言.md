@@ -308,4 +308,72 @@ select dept_name, avg_salary
 from (select dept_name, avg(salary) as avg_salary from instructor group by dept_name) as dept_avg 
 where avg_salary > 42000;
             ```
-### `
+- `lateral`子句（SQL：2003标准）：横向关联子句
+	- 允许子查询引用外层查询中的列，即使子查询在`FROM`子句中
+    - 语法：
+        ```sql
+        FROM [table_name] AS [alias], LATERAL (SELECT [column_name] FROM [table_name] WHERE [condition]) AS [subquery_alias]
+        ```
+    - 例：查询教师表中每个教师的名字、工资以及所在系的平均工资，使用`lateral`子查询来计算每个教师所在系的平均工资
+			```sql
+			select name, salary, avg_salary 
+			from instructor I1, lateral (select avg(salary) as avg_salary 
+			from instructor I2 
+			where I2.dept_name= I1.dept_name);
+			```
+- `with`子句：公共子表达式（common table expression，CTE）
+    - 普通`CTE`：用于定义仅在当前查询结果中有效的临时关系
+	    - 语法：`with [cte_name] as (SELECT [column_name] FROM [table_name] WHERE [condition])`
+	    - 例：查询预算最高的院系
+        ```sql
+        with max_budget(value) as (select max(budget) from department) 
+        select dept_name from department, max_budget where department.budget = max_budget.value;
+        ```
+    - 递归`with`子句（SQL:1999标准）：处理层级递归数据
+	    - 结构：
+        ```sql
+        WITH RECURSIVE [cte_name] AS (
+            [base_query] -- 基础查询，提供递归的起始点
+            UNION ALL
+            [recursive_query] -- 递归查询，引用自身以继续递归
+        )
+        SELECT * FROM [cte_name];
+        ```
+	        - 锚点成员：递归的起点，提供初始数据集
+	        - 递归成员：引用CTE自身，基于前一次递归的结果继续生成新的结果集
+	        - 递归查询必须包含一个终止条件，以防止无限递归
+	    - 例：查询员工表中所有员工及其直接或间接的上级员工
+        ```sql
+        WITH RECURSIVE EmployeeHierarchy AS (
+            -- 锚点成员：选择没有上级的员工（即顶层员工）
+            SELECT ID, name, manager_id, 1 AS level
+            FROM employee
+            WHERE manager_id IS NULL
+            
+            UNION ALL
+            
+            -- 递归成员：选择有上级的员工，并连接到上级员工的层次结构中
+            SELECT e.ID, e.name, e.manager_id, eh.level + 1
+            FROM employee e
+            INNER JOIN EmployeeHierarchy eh ON e.manager_id = eh.ID
+        )
+        SELECT * FROM EmployeeHierarchy;
+        ```
+### `SELECT`子句中的子查询
+- 返回单个标量值的子查询，用于替换`select`中的列
+	- 要求：必须返回单行单列的结果，否则会导致错误
+    - 例：查询每个教师的名字和所在系的平均工资
+        ```sql
+        select name, (select avg(salary) from instructor where dept_name = I.dept_name) as avg_salary 
+        from instructor I;
+        ```
+        可以写作`group by`的形式：
+        ```sql
+select dept_name, avg(salary) as avg_salary 
+from instructor 
+group by dept_name;
+        ```
+
+
+
+
