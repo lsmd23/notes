@@ -478,3 +478,56 @@ SET tot_cred = (
 	);
 		    ```
         解释：子查询计算每个学生的总学分，使用`CASE`表达式处理没有选课的学生，将其总学分设置为0
+    - 更新的约束冲突：
+	    - 例：
+		    ```sql
+		    -- 创建表，id为主键（唯一非空约束） 
+		    CREATE TABLE myStudent (id INT PRIMARY KEY, name VARCHAR(20)); 
+		    -- 插入测试数据 
+		    INSERT INTO myStudent VALUES(1, 'Bob'); 
+		    INSERT INTO myStudent VALUES(2, 'Alice'); 
+		    -- 尝试将Alice的id改为1 
+		    UPDATE myStudent SET id = 1 WHERE name = 'Alice';
+		    ```
+		    结果：更新失败，违反了主键约束，因为id为1已经存在于表中
+	    - 原因：更新操作试图将一个属性值修改为一个已经存在的值，导致唯一约束被破坏
+# 连接操作
+- 示例表：
+	- 银行数据库：
+		- 
+			|表名|字段|作用|
+			|---|---|---|
+			|`Branch`|`branch-name`, `branch-city`, `assets`|支行信息|
+			|`Customer`|`id`, `customer-name`, `customer-street`, `customer-city`|客户信息|
+			|`Account`|`account-number`, `branch-name`, `balance`|账户信息|
+			|`Loan`|`loan-number`, `branch-name`, `amount`|贷款信息|
+			|`Depositor`|`id`, `account-number`|客户 - 账户关联|
+			|`Borrower`|`id`, `loan-number`|客户 - 贷款关联|
+	- 大学数据库：核心表结构
+		- |表名|核心字段|作用|
+			|---|---|---|
+			|`student`|`s_ID`, `name`, `dept_name`, `tot_cred`|学生信息|
+			|`takes`|`s_ID`, `course_id`, `sec_id`, `semester`, `year`, `grade`|学生选课信息|
+			|`course`|`course_id`, `title`, `dept_name`, `credits`|课程信息|
+			|`prereq`|`course_id`, `prereq_id`|课程先修关系|
+- 连接操作：本质是带匹配条件的笛卡尔积，通常作为子查询嵌套在`FROM`子句中
+    - 内连接（Inner Join）：返回满足连接条件的元组
+		- 自然连接（Natural Join）：自动基于两个表中同名的属性进行连接，连接条件为这些同名属性的值相等
+			- 等价形式：`A natural inner join B`等价于`A inner join B using([common_attribute])`
+			- 例：`loan natural join borrower`，连接贷款表和借款人表，自动使用`loan-number`作为连接条件，**悬浮元组（Dangling Tuple，即没有匹配的元组）会被过滤掉**
+		- Theta连接（Theta Join）：用`ON`子句指定任意条件，保留所有列
+			- 例：`loan inner join borrower on loan.loan-number = borrower.loan-number`，连接贷款表和借款人表，使用`loan-number`作为连接条件，**悬浮元组会被过滤掉**
+		- 自连接（Self Join）：同一个表与自身进行连接，用于表内数据对比
+			- 例：
+				```sql
+			select count(distinct i1.id) 
+			from instructor as i1 inner join instructor as i2 
+			on i1.salary > i2.salary;
+			    ```
+	- 外连接（Outer Join）：保留满足连接条件的元组以及不满足连接条件的元组（悬浮元组），对于不满足连接条件的元组，**缺失的属性值用`NULL`填充**
+        - 左外连接（Left Outer Join）：保留左表中的所有元组
+            - 例：`student natural left outer join takes`，连接学生表和选课表，保留学生表中的所有记录，对于没有匹配的选课记录，选课相关属性值为`NULL`
+        - 右外连接（Right Outer Join）：保留右表中的所有元组
+            - 例：`loan right outer join borrower on loan.loan-number = borrower.loan-number`，连接贷款表和借款人表，保留借款人表中的所有记录，对于没有匹配的贷款记录，贷款相关属性值为`NULL`
+        - 全外连接（Full Outer Join）：保留两个表中的所有元组
+            - 例：`course natural full outer join prereq`，连接课程表和先修关系表，保留两个表中的所有记录，对于没有匹配的记录，缺失的属性值为`NULL`
