@@ -373,7 +373,108 @@ select dept_name, avg(salary) as avg_salary
 from instructor 
 group by dept_name;
         ```
+# 数据库的修改操作
+- 删除（Deletion）：
+	- 清空全表数据：`DELETE FROM [table_name]`
+		- 仅删除数据，表结构仍然存在
+	- 条件删除：`DELETE FROM [table_name] WHERE [condition]`
+        - 仅删除满足条件的数据行
+    - 嵌套子查询删除：
+        ```sql
+        DELETE FROM [table_name] 
+        WHERE [column_name] IN (SELECT [column_name] FROM [table_name] WHERE [condition]);
+        ```
+        - 例：删除学生表中选修过生物课程的学生记录
+            ```sql
+DELETE FROM student 
+WHERE ID IN (SELECT ID FROM takes WHERE course_id IN (SELECT course_id FROM course WHERE dept_name = 'Biology'));
+            ```
+    - 基于聚合的删除：以删除工资低于教师平均工资的所有教师为例
+        ```sql
+DELETE FROM instructor 
+WHERE salary < (SELECT AVG(salary) FROM instructor);
+        ```
+	    - 风险：若删除时动态重算工资，会导致后续删除出现问题
+	    - 解决：先执行子查询计算，再删除
+- 插入（Insertion）：
+	- 单行插入：
+		- 隐式列顺序插入：按表结构对应列顺序插入数据
+            ```sql
+            INSERT INTO [table_name] VALUES ([value1], [value2], ..., [valueN]);
+            ```
+            存在数据和表结构不匹配导致插入失败的风险
+        - 显式列顺序插入：指定列名和对应值的顺序
+            ```sql
+            INSERT INTO [table_name] ([column_name1], [column_name2], ..., [column_nameN]) 
+            VALUES ([value1], [value2], ..., [valueN]);
+            ```
+            更加安全，可读性强，不受表结构影响
+        - 插入空值：使用`NULL`表示空值
+            ```sql
+            INSERT INTO [table_name] ([column_name1], [column_name2]) 
+            VALUES ([value1], NULL);
+            ```
+    - 批量插入：`INSERT ... SELECT`语句
+        ```sql
+        INSERT INTO [table_name] ([column_name1], [column_name2], ..., [column_nameN]) 
+        SELECT [column_name1], [column_name2], ..., [column_nameN] 
+        FROM [source_table] 
+        WHERE [condition];
+        ```
+        - 例：将教师表中工资高于80000的教师记录插入到一个新的表中
+            ```sql
+INSERT INTO high_salary_instructors (ID, name, dept_name, salary) 
+SELECT ID, name, dept_name, salary 
+FROM instructor 
+WHERE salary > 80000;
+            ```
+- 更新（Updates）：
+	- 条件更新：以给工资大于 10 万的教师涨 3%，其余涨 5% 为例
+		- 分两次更新：
+            ```sql
+            UPDATE instructor 
+            SET salary = salary * 1.03 
+            WHERE salary > 100000;
 
-
-
-
+            UPDATE instructor 
+            SET salary = salary * 1.05 
+            WHERE salary <= 100000;
+            ```
+        - 使用`CASE`表达式一次更新：
+            ```sql
+            UPDATE instructor 
+            SET salary = CASE 
+                WHEN salary > 100000 THEN salary * 1.03 
+                ELSE salary * 1.05 
+            END;
+            ```
+            解释：`CASE`语句根据条件对每行数据进行不同的计算，满足条件的行执行对应的更新操作
+    - 标量子查询更新：以重新计算成绩非F且非空课程的学生总分为例
+	    - 无课学生设置为`NULL`
+        ```sql
+        UPDATE student S
+        SET tot_cred = (
+	        SELECT SUM(credits) 
+            FROM takes, course
+            WHERE takes.course_id = course.course_id 
+                AND takes.grade IS NOT NULL
+                AND takes.grade <> 'F'
+                AND takes.ID = student.ID
+        );    
+        ```
+        - 无课学生设置为0
+		    ```sql
+UPDATE student S 
+SET tot_cred = ( 
+	SELECT CASE 
+		WHEN SUM(credits) IS NOT NULL THEN SUM(credits) 
+		ELSE 0 
+	END 
+	FROM takes, course 
+	WHERE takes.course_id = course.course_id 
+		AND S.ID = takes.ID 
+		AND takes.grade <> 'F' 、
+		AND takes.grade IS NOT NULL 
+	);
+		    ```
+        解释：子查询计算每个学生的总学分，使用`CASE`表达式处理没有选课的学生，将其总学分设置为0
