@@ -93,7 +93,7 @@
 			- `A`：要删除的属性名
 			- 有些数据库不支持删除列，因为列可能有约束或依赖关系
 - 表结构的存储：
-	- 数据字典：数据库的元数据中枢，用于存储所有数据库对象的结构信息，也被称为系统目录（system catalog）或系统表（system tables）
+	- 数据字典：数据库的元数据中枢，用于存储所有数据库对象的结构信息，也被称为系统目录（system catalog）或系统表（system tables） ^37872d
 		- 在PostgreSQL中，可以通过路径：`Catalogs -> pg_catalog -> Tables`查找系统表，同时提供标准的`information_schema`视图来查询表结构信息，包括：
 			- `pg_class`：存储表、视图、序列等关系对象的元数据
 			- `pg_attribute`：存储表的属性（列）的元数据
@@ -531,3 +531,5 @@ SET tot_cred = (
             - 例：`loan right outer join borrower on loan.loan-number = borrower.loan-number`，连接贷款表和借款人表，保留借款人表中的所有记录，对于没有匹配的贷款记录，贷款相关属性值为`NULL`
         - 全外连接（Full Outer Join）：保留两个表中的所有元组
             - 例：`course natural full outer join prereq`，连接课程表和先修关系表，保留两个表中的所有记录，对于没有匹配的记录，缺失的属性值为`NULL`
+---
+[[L3 存储与文件结构]]
