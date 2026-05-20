@@ -456,3 +456,68 @@ Output：
 > 这个项目的核心是研究雷达预测中的训练-推理对齐：模型训练时学习任意帧噪声水平的 denoising，推理时用 causal pyramid schedule 让近未来先去噪、远未来后去噪，从而缓解 full-sequence generation 与 autoregressive rollout 的冲突。  
 > History Guidance 则用 conditional/unconditional 两个历史条件分支做差值引导，history-free fine-tuning 保证无历史分支有意义，stabilized HG 进一步降低 generated context 作为历史时的分布偏移。  
 > 当前最强小样本结果来自 causal epoch230 + latest context + eta=1.0 + scale=1.5，CSI/HSS 最好；而 full context + eta=1.0 + scale=1.5 的 MSE、SSIM、LPIPS、FAR 更稳，是更适合展示视觉质量与虚警控制的设置。
+
+
+
+
+---
+## 原因 1：attention mask 结构不同
+
+causal attention 限制 future token 的可见范围。  
+因此模型更容易依赖：
+
+- clean history；
+- 当前 block；
+- 已经较可靠的上下文。
+
+noncausal attention 没有这个限制。  
+因此它可以让不同 future token 相互通信，即使这些 token 仍然带噪。
+
+这直接导致：
+
+- causal clean key mass 更高；
+- noncausal expected key noise 更高。
+
+---
+
+## 原因 2：DF 推理调度制造了 mixed-noise context
+
+causal pyramid schedule 使同一个 sampling step 中，不同 future frames 处于不同噪声等级。
+
+所以 attention 面临的不是普通视频模型里的“同质 token 序列”，而是：
+
+> clean history + low-noise future + mid-noise future + high-noise future
+
+noncausal 模型更充分地利用这个 mixed-noise context。  
+causal 模型则更倾向于把 clean history 作为稳定锚点。
+
+---
+
+## 原因 3：雷达预测中的 FAR/POD 张力
+
+noncausal 看 noisy future 更多，可能帮助它生成更丰富的未来结构，因此 POD 更高。  
+但 noisy future 本身不稳定，也可能让模型“过度相信”不确定结构，因此 FAR 更高。
+
+causal 看 clean history 更多，更保守，因此 FAR 较低。  
+但它对强移动、强变化区域可能响应不足，因此 POD 较低。
+
+这和你前面评估结果一致：
+
+- noncausal：CSI/POD 更好，但 FAR 更高；
+- causal：FAR 更低，但召回更弱。
+
+---
+
+# 8. 这一页的核心结论
+
+你可以在 PPT 底部放这三句话：
+
+> Causal attention behaves as history-anchored denoising.  
+> Noncausal attention behaves as noisy-future collaborative denoising.  
+> This explains the POD/FAR trade-off observed in evaluation.
+
+中文版本：
+
+> causal 更像“历史锚定式去噪”，稳定但保守；  
+> noncausal 更像“noisy future 协同去噪”，召回更强但更易虚警；  
+> 这为评估中 POD/FAR 的差异提供了机制解释。
