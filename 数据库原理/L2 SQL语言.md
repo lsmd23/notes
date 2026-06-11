@@ -525,11 +525,11 @@ SET tot_cred = (
 			on i1.salary > i2.salary;
 			    ```
 	- 外连接（Outer Join）：保留满足连接条件的元组以及不满足连接条件的元组（悬浮元组），对于不满足连接条件的元组，**缺失的属性值用`NULL`填充**
-        - 左外连接（Left Outer Join）：保留左表中的所有元组
-            - 例：`student natural left outer join takes`，连接学生表和选课表，保留学生表中的所有记录，对于没有匹配的选课记录，选课相关属性值为`NULL`
-        - 右外连接（Right Outer Join）：保留右表中的所有元组
-            - 例：`loan right outer join borrower on loan.loan-number = borrower.loan-number`，连接贷款表和借款人表，保留借款人表中的所有记录，对于没有匹配的贷款记录，贷款相关属性值为`NULL`
-        - 全外连接（Full Outer Join）：保留两个表中的所有元组
-            - 例：`course natural full outer join prereq`，连接课程表和先修关系表，保留两个表中的所有记录，对于没有匹配的记录，缺失的属性值为`NULL`
+		- 左外连接（Left Outer Join）：保留左表中的所有元组
+			- 例：`student natural left outer join takes`，连接学生表和选课表，保留学生表中的所有记录，对于没有匹配的选课记录，选课相关属性值为`NULL`
+		- 右外连接（Right Outer Join）：保留右表中的所有元组
+			- 例：`loan right outer join borrower on loan.loan-number = borrower.loan-number`，连接贷款表和借款人表，保留借款人表中的所有记录，对于没有匹配的贷款记录，贷款相关属性值为`NULL`
+		- 全外连接（Full Outer Join）：保留两个表中的所有元组
+			- 例：`course natural full outer join prereq`，连接课程表和先修关系表，保留两个表中的所有记录，对于没有匹配的记录，缺失的属性值为`NULL`
 ---
 [[L3 存储与文件结构]]
