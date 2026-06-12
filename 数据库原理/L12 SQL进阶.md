@@ -134,4 +134,152 @@
 			```
         在`assets`属性上加检查约束，确保银行的资产不能为负数
         - 违反`check`约束的插入或更新操作会被拒绝，保证数据的有效性和合理性
-- 参照完整性约束：负责处理多表间的约束
+- 参照完整性约束：负责处理多表间的约束，保证一张表中列的值在另一张表中存在
+	- 基本概念：
+		- 被引用的表称为父表或主表，被引用的列一般是父表的主键
+		- 引用的表称为子表或从表，引用的列称为外键
+		- 例：![[Pasted image 20260612134914.png]]
+	- 外键的定义：
+	    - 语法：`FOREIGN KEY (<foreign_key_column>) REFERENCES <parent_table>(<parent_key_column>)`
+		-  例：
+			```sql
+            -- 父表：被引用的表，主键是branch_name 
+            create table branch ( 
+	            branch_name char(15), 
+		        branch_city char(30), 
+		        assets integer, 
+		        primary key (branch_name) 
+		    ); 
+		    -- 子表：引用父表的account表，定义外键 
+		    create table account ( 
+			    account_number char(10), 
+			    branch_name char(15), 
+			    balance integer, 
+			    primary key (account_number), 
+			    foreign key (branch_name) references branch 
+			);
+			```
+		- 说明：
+			- 省略父表列名时默认引用主键列
+			- 子表的外键列必须和父表的被引用列一致
+		- 形式化定义：
+			- 父表记为$r_1$，其主键记为$K_1$
+			- 子表记为$r_2$，其外键记为$\alpha$
+			- 形式化定义为：$\Pi_{\alpha}(r_2) \subseteq \Pi_{K_1}(r_1)$，即子表的外键列值必须是父表主键列值的子集，也叫**子集依赖**
+	- 外键约束下的检测：
+		- `INSERT`操作：
+			- 必须保证新插入的外键值在父表的主键中存在，也即$t_2[\alpha] \in \Pi_{K_1}(r_1)$，$t_2$是子表中的新元组
+		- `DELETE`操作：
+			- 先查询有没有引用，也即执行：$\sigma_{\alpha = t_1[K_1]}(r_2)$，$t_1$是父表中的被删除元组，$K_1$是父表的主键
+			- 如果有子表中的引用，则根据设置的删除规则进行处理：
+				- `RESTRICT`：拒绝删除父表中的元组，保持数据完整性
+				- `CASCADE`：级联删除，同时删除子表中引用该父表元组的所有子表元组
+		- `UPDATE`操作：
+			- 更新子表外键值：类似`INSERT`操作，保证新的外键值和父表主键值一致
+			- 更新父表的主键值：类似`DELETE`操作，先查询有没有引用，如果有则根据设置的更新规则进行处理：
+				- `RESTRICT`：拒绝更新父表中的主键值，保持数据完整性
+				- `CASCADE`：级联更新，同时更新子表中引用该父表主键值的所有子表元组的外键值
+	- 级联操作与置空：
+		- 级联操作的声明：在建表时进行声明
+			```sql
+			create table account ( 
+				... 
+				foreign key(branch_name) references branch 
+				on delete cascade -- 删除父表数据时，级联删除子表数据 
+				on update cascade -- 更新父表主键时，级联更新子表外键 ... 
+			);
+			```
+			- `on delete cascade`：删除父表数据时，级联删除子表数据
+			- `on update cascade`：更新父表主键时，级联更新子表外键
+			- 若不写明删除/更新规则，默认使用`RESTRICT`
+		- 置空/置为默认值操作：当父表数据被删除或更新时，将子表中的外键值置为`NULL`（或置为默认值）
+			- `on delete set null`：删除父表数据时，将子表外键值置为`NULL`
+			- `on delete set default`：删除父表数据时，将子表外键值置为默认值
+			- 注：外键的值为`NULL`是合法的数值
+	- 自引用外键：
+		- 例：
+			```sql
+			create table partners ( 
+				player1_name char(15) primary key, 
+				player2_name char(15), 
+				gender int, 
+				age int, 
+				foreign key (player2_name) references partners 
+			);
+			```
+			此处`player2_name`是一个自引用外键，引用同一表中的主键`player1_name`
+# 数据类型与模式
+- 内嵌时间数据类型：
+    - `DATE`：表示日期，格式为`YYYY-MM-DD`
+	    - 例：`2024-06-12`表示2024年6月12日
+    - `TIME`：表示时间，格式为`HH:MM:SS`
+	    - 例：`14:30:30.75`表示14点30分30秒75毫秒，最后一位表示毫秒
+    - `TIMESTAMP`：表示日期和时间的组合，格式为`YYYY-MM-DD HH:MM:SS`
+	    - 例：`2024-06-12 14:30:30.75`表示2024年6月12日14点30分30秒75毫秒
+    - `INTERVAL`：表示时间间隔，格式为`[+|-]Y-M D H:M:S`
+        - 例：`+2-6 10 5:30:00`表示正2年6个月10天5小时30分钟0秒的时间间隔
+        - 时间间隔可以和日期/时间类型进行加减运算，得到新的日期/时间值“
+	        - 两个`DATE`/`TIME`/`TIMESTAMP`类型的值相减得到一个`INTERVAL`类型的值
+	        - `DATE`/`TIME`/`TIMESTAMP`类型的值加上一个`INTERVAL`类型的值得到一个新的`DATE`/`TIME`/`TIMESTAMP`类型的值
+- 用户定义类型：
+	- 语法：`CREATE TYPE <type_name> AS (<attribute_name> <data_type>, ...)`
+		- 例：
+			```sql
+			-- 自定义一个金额类型Dollars，本质是numeric(12,2) 
+			create type Dollars as numeric (12,2) final; 
+			-- 在表中使用自定义类型 
+			create table department ( 
+				dept_name varchar (20), 
+				building varchar (15), 
+				budget Dollars -- 用Dollars代替直接写numeric(12,2) 
+			);
+			```
+			- `final`关键字表示该类型不能被继承
+			- `numeric(12,2)`表示该类型的值最多有12位数字，其中小数部分有2位
+			- 自定义类型和别名有所不同，和一般的`numeric(12,2)`类型不能直接互相赋值
+- 用户定义域：域（Domain）也可以由用户自定义，可以直接绑定约束
+	- 语法：`CREATE DOMAIN <domain_name> AS <data_type> [constraint]`
+		- 例：
+			```sql
+			-- 示例1：定义一个不允许为空的人名域 
+			create domain person_name char(20) not null; 
+			-- 示例2：定义一个学位等级域，限制只能取指定值 
+			create domain degree_level varchar(10) 
+			constraint degree_level_test check (value in ('Bachelors', 'Masters', 'Doctorate'));
+			```
+	- 特点：
+		- 用户定义域可以直接复用其约束，简化表定义
+		- 修改约束/数据类型时，只需修改域定义，所有使用该域的表都会自动更新
+	- 带`CHECK`的域：域在定义时可以加入`CHECK`作约束校验
+		- 例：
+			```sql
+			create domain hourly_wage numeric(5,2) 
+			constraint value_test check(value >= 4.00);
+			```
+			- `constraint`后定义了约束名称，在报错时会直接显示该约束名称，方便定位问题
+			- 域的`check`将自动应用于所有使用该域的属性上，确保数据的一致性和有效性
+- 大对象类型（Large-Object Types）：用于存储大量数据，如文本、图像、音频等
+    - `BLOB`（Binary Large Object）：用于存储二进制数据，如图像、音频、视频等
+	    - 数据库不解析数据内容，将解析权交由外部应用解析
+    - `CLOB`（Character Large Object）：用于存储大量文本数据，如文档、日志等
+	    - 专门用于处理大文本，支持字符的各种编码
+	- 对大对象的查询一般只会返回指针，而不是数据本身，应用程序可以按照指针读取数据，避免大量的I/O开销
+# 授权
+- 基本概念：
+	- 授权（Authorization）是数据库管理员（DBA）授予用户访问数据库资源的权限，以控制用户对数据库的操作和访问
+	- 用户（User）：授权的主体
+		- 一个用户由`AuthID`（通常是用户名）标识，是授权的接收方
+		- 一个用户可以有多个身份标识，多个用户也可以共享同一角色
+		- 语法：
+			```sql
+			-- 创建用户test，密码为test 
+			CREATE USER test PASSWORD 'test'; 
+			-- 修改用户test的密码为new 
+			ALTER USER test PASSWORD 'new'; 
+			-- 删除用户test 
+			DROP USER test;
+			```
+	- 数据库对象：授权的客体
+		- 数据库、域、模式、表、视图、村粗过程等都属于授权客体
+		- 不同客体的权限不同（如表有查询权限，索引有创建/删除权限）
+		- 对象的创建者默认拥有所有权限，并可以对qi'ta'yong'hu
