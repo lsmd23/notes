@@ -186,10 +186,107 @@
 			until boolean expression 
 			end repeat;
 			```
-		- `FOR`循环：对一个范围或集合中的每个元素执行代码块
-```sql
-
-```
-
-
+		- `FOR`循环：对一个范围或集合中的每个元素执行代码块，例：
+			```sql
+			declare n integer default 0; 
+			for r as 
+				select budget from department 
+			do 
+				set n = n + r.budget 
+			end for
+			```
+			此处`r`是循环变量，表示查询结果的每一行，通过`r.budget`访问当前行的`budget`列
+	- 条件结构：
+		- `IF-THEN-ELSE`：基础的条件判断结构
+			```sql
+			if boolean expression then 
+			    sequence of statements; 
+			elsif boolean expression then 
+			    sequence of statements; 
+			else 
+			    sequence of statements; 
+			end if;
+			```
+		- `CASE`表达式：更简洁的多分支条件表达式，适用于简单的条件判断
+			```sql
+			case 
+			    when boolean expression then result 
+			    when boolean expression then result 
+			    else result 
+			end case;
+			```
+	- **注：不同数据库系统的过程化语言在语法和功能上可能存在差异，具体使用时需要参考相应数据库的文档**
+- 外部语言程序：SQL自带的过程化语言能力有限，因此允许使用外部语言编写过程，再在SQL中调用
+	- 例：
+		```sql
+		create procedure dept_count_proc(in dept_name varchar(20), out count integer) 
+		language C 
+		external name '/usr/avi/bin/dept_count_proc' 
+		create function dept_count(dept_name varchar(20)) 
+		returns integer 
+		language C 
+		external name '/usr/avi/bin/dept_count'
+		```
+		- `language C`：指定使用C语言编写外部程序
+		- `external name`：指定编译后可执行文件的路径，数据库将加载文件并执行其代码
+	- 优点：性能高，适合复杂计算和特殊数据类型处理
+	- 缺点：开发复杂，安全风险较高，需要额外的权限和配置
 # 触发器
+- 基本概念：
+	- 触发器（Trigger）：数据库被修改时，由系统自动执行的语句
+		- 触发条件（Conditions）：定义触发器何时被触发，如`BEFORE INSERT`、`AFTER UPDATE`等
+		- 触发动作（Actions）：定义触发器被触发时执行的SQL语句
+	- ECA规则（Event-Condition-Action Rules）：触发器的核心模型
+		- 事件（Event）：触发器被触发的条件，如数据修改操作（INSERT、UPDATE、DELETE）
+		- 条件（Condition）：触发器被触发时需要满足的条件，如特定列的值满足某个条件
+		- 动作（Action）：当触发器被触发且条件满足时执行的SQL语句，如更新其他表、记录日志等
+- 触发器的实现细节：
+	- 触发时机：
+		- `BEFORE`触发器：在修改操作执行前触发，用于**校验、修正、拦截数据**
+			- 例：
+				```sql
+				create trigger setnull_trigger before update of takes 
+				referencing new row as nrow 
+				for each row 
+				when (nrow.grade = ' ') 
+				begin atomic 
+					set nrow.grade = null; 
+				end;
+				```
+				如果新的`grade`值为空格，则将其设置为`NULL`
+		- `AFTER`触发器：在修改操作执行后触发，用于**同步数据，更新其他表，记录日志等**
+			- 例：
+				```sql
+				create trigger credits_earned after update of takes on (grade) 
+				referencing new row as nrow 
+				referencing old row as orow 
+				for each row 
+				when nrow.grade <> ’F’ and nrow.grade is not null 
+					and (orow.grade = ’F’ or orow.grade is null) 
+				begin atomic 
+					update student 
+					set tot_cred= tot_cred + 
+						(select credits 
+						from course 
+						where course.course_id= nrow.course_id) 
+					where student.id = nrow.id; 
+				end;
+				```
+				当学生的成绩更新到数据库后，如果新的成绩不是`F`且不为`NULL`，同时旧的成绩是`F`或`NULL`，则更新学生的总已修学分
+	- 新旧数据的引用：`OLD`和`NEW`
+		- 触发器执行时，可以访问修改前的数据（`OLD`）和修改后的数据（`NEW`），通过这些引用可以根据数据的变化来决定触发器的行为
+		    - `INSERT`操作只能访问`NEW`数据
+			- `DELETE`操作只能访问`OLD`数据
+			- `UPDATE`操作可以访问`OLD`和`NEW`数据
+		- 例：上例中，`nrow`引用了新的数据行，`orow`引用了旧的数据行，通过比较新旧成绩的变化来决定是否更新学生的总已修学分
+	- `UPDATE`触发器的列级限制：
+		- `UPDATE OF <column>`：指定触发器仅在特定列被更新时触发，避免不必要的触发器执行，提高性能
+- 更细粒度的触发器：
+	- 行级触发器（Row-level Trigger）：针对每一行数据的修改操作触发，适用于需要对每条数据进行处理的场景
+		- 语法：`FOR EACH ROW`
+		- 逻辑：每一条受影响的记录都会触发一次触发器
+			- 例：`BEFORE UPDATE OF grade ON takes FOR EACH ROW`表示每次更新`takes`表的`grade`列时，针对每条记录触发一次
+	- 语句级触发器（Statement-level Trigger）：针对整个SQL语句的修改操作触发，适用于需要对整个操作进行处理的场景
+		- 语法：`FOR EACH STATEMENT`
+		- 逻辑：无论SQL语句影响多少条记录，触发器只会被触发一次
+		- 特性：可以引用`OLD TABLE`和`NEW TABLE`两个过渡表，方便批量处理数据
