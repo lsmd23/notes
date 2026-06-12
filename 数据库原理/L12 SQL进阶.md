@@ -282,4 +282,78 @@
 	- 数据库对象：授权的客体
 		- 数据库、域、模式、表、视图、村粗过程等都属于授权客体
 		- 不同客体的权限不同（如表有查询权限，索引有创建/删除权限）
-		- 对象的创建者默认拥有所有权限，并可以对qi'ta'yong'hu
+		- **对象的创建者默认拥有所有权限，并可以对其他用户授权**
+- 权限的类型：
+	- 关系的权限：表/视图的权限
+		- `SELECT`：查询权限，允许用户查询表中的数据
+		- `INSERT`：插入权限，允许用户向表中插入新数据
+		- `UPDATE`：修改权限，允许用户修改表中已有的数据
+		- `DELETE`：删除权限，允许用户删除表中的数据
+		- `REFERENCES`：引用权限，允许用户创建外键引用该表
+	- 权限的执行：SQL语句必须保证用户具有执行该语句所需的权限，否则会被拒绝
+		- 例：
+			```sql
+			insert into depositor 
+			select customer-name, loan-number 
+			from loan, borrower 
+			where branch-name = 'Perryridge' 
+			and loan.account-number = borrower.account-number
+			```
+			这条语句的执行需要`loan`和`borrower`表的查询权限，以及`depositor`表的插入权限
+	- 模式授权：针对表结构/索引的模式操作权限
+		- `Resources authorization`：允许创建新的关系表
+		- `Alteration authorization`：允许修改表结构，如添加/删除属性、修改属性类型等
+		- `Index authorization`：允许创建/删除索引
+		- `Drop authorization`：允许删除表
+	- 视图授权：
+		- 通过定义视图，可以限制用户只能访问表中的部分数据或属性，从而实现更细粒度的权限控制
+		- 例：对于银行数据库系统，创建一个只包含非敏感数据的视图
+			```sql
+			create view cust-loan as 
+			select branch-name, customer-name 
+			from borrower, loan 
+			where borrower.loan-number = loan.loan-number
+			```
+			之后银行的职员只获取到`cust-loan`视图的访问权限，隐藏了贷款金额，账户号码等敏感信息
+		- 特点：
+			- 视图的授权不依赖基表的权限
+			- 创建新的视图不需要建表的权限
+			- 视图的权限不可能超过创建者的权限
+			- 授权的检测：数据库会在查询之前，先检查权限，再解析视图的查询语句对基表进行查询
+- 授权图（Grant Graph）：
+    - 定义：授权图是一个有向图，用于表示用户之间的授权关系
+	    - 节点：用户（`AuthID`）
+	    - 边：权限的授予关系，从授权者指向被授权者
+	    - 根节点：数据库管理员（DBA），默认拥有所有权限，是授权图的根节点
+	    - 例：![[Pasted image 20260612145424.png]]
+	- 规则：所有的权限必须有一条从DBA出发的路径，即所有权限都必须由DBA直接或间接授权
+	- 权限的收回：当一个权限被收回时，需要同时收回所有通过该权限授权出去的权限，即收回该权限的子树
+		- 例：![[Pasted image 20260612150246.png]]没有从DBA出发的路径的循环授权是不被允许的
+- SQL授权语句：
+	- `GRANT`语句：
+		- 语法：
+			```sql
+			grant <privilege list> 
+			on <relation name or view name> 
+			to <user list>
+			```
+			- `<privilege list>`：权限列表，可以是`SELECT`、`INSERT`、`UPDATE`、`DELETE`等权限的组合，`all privileges`表示授予所有权限
+			- `<user_list>`：用户列表，可以是一个或多个用户名的组合，`PUBLIC`表示授予所有用户权限
+		- 例：`grant select on branch to U1, U2, U3;`表示授予用户U1、U2、U3对`branch`表的查询权限
+	- `WITH GRANT OPTION`：允许被授权用户将权限继续授权给其他用户
+		- 例：`grant select on branch to U1 with grant option;`表示授予用户U1对`branch`表的查询权限，并允许U1将该权限继续授权给其他用户
+	- `REVOKE`语句：收回授权
+	    - 语法：
+			```sql
+			revoke <privilege list> 
+			on <relation name or view name> 
+			from <user_list> 
+			[restrict|cascade]
+			```
+			- `cascade`：级联收回权限，即同时收回所有通过该权限授权出去的权限
+			- `restrict`：限制收回权限，如果有通过该权限授权出去的权限，则拒绝收回
+			- `<privilege list>`：权限列表，可以是`SELECT`、`INSERT`、`UPDATE`、`DELETE`等权限的组合，`all privileges`表示收回所有权限
+			- `<user_list>`：用户列表，可以是一个或多个用户名的组合，`public`表示收回所有用户的权限
+		- 例：`revoke select on branch from U1 cascade;`表示收回用户U1对`branch`表的查询权限，并同时收回所有通过该权限授权出去的权限
+---
+[[L13 SQL高级]]
