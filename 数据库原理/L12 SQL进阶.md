@@ -99,3 +99,39 @@
 			```
 	- PostgreSQL中的事务实操：![[Pasted image 20260611204802.png]]
 # 完整性约束
+- 完整性约束：对数据库授权更改的一种约束，确保数据库的数据一致性来防止数据库遭受意外损坏
+	- 目的是为了防止用户的意外操作/逻辑错误
+- 单表约束：对单个关系的约束
+	- `NOT NULL`约束：确保某个属性的值不能为空
+		- 例：`branch_name char(15) not null`，银行的支行名称不能为空
+		- 强制某个值非空，确保数据完整性
+	- `PRIMARY KEY`约束：定义表的主键，用于唯一标识表的每一行数据
+		- 特点：列值非空（`NOT NULL`）且列值全局唯一，不能重复
+        - 例：`branch_name char(15) primary key`，也即银行的支行名称既不能为空又必须唯一
+        - 一张表只能有**一个主键**
+	- `UNIQUE`（唯一性）约束：确保某个属性的值在表中唯一，但允许空值
+		- 例：
+			```sql
+			create table department ( 
+				dept_name varchar(20), 
+				building varchar(15), 
+				budget numeric(12,2), 
+				unique (dept_name) 
+			);
+			```
+		在`dept_name`中加唯一性约束，也即部门名称不允许重复，但可为空
+		- 空值允许重复，但非空值必须唯一
+	- `CHECK`约束：定义一个布尔表达式，限制属性值必须满足的条件
+		- 语法：`check P`，其中P是一个布尔表达式，可以涉及一个或多个属性
+		- 例：
+			```sql
+			create table branch ( 
+				branch_name char(15), 
+				branch_city char(30), 
+				assets integer, 
+				primary key (branch_name), 
+				check (assets >= 0) );
+			```
+        在`assets`属性上加检查约束，确保银行的资产不能为负数
+        - 违反`check`约束的插入或更新操作会被拒绝，保证数据的有效性和合理性
+- 参照完整性约束：负责处理多表间的约束
