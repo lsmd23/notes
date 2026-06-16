@@ -101,17 +101,17 @@
 			- `pg_namespace`：存储命名空间（schema）的信息
 	- 数据库表的层次结构：
 		- 以PostgreSQL为例，数据库对象的层次结构如下：![[Pasted image 20260408154914.png]]
-            - DBMS Instance：数据库管理系统实例，包含多个数据库，全局角色和全局表空间等
-            - Catalog：数据库，实例下的独立逻辑单元，不同catalog下的数据库是物理隔离的
-            - Schema：Database下的逻辑分组，用于隔离用户对象
-            - Relation：Schema下的表、视图等关系对象
-    - 数据库和表目录操作
+			- DBMS Instance：数据库管理系统实例，包含多个数据库，全局角色和全局表空间等
+			- Catalog：数据库，实例下的独立逻辑单元，不同catalog下的数据库是物理隔离的
+			- Schema：Database下的逻辑分组，用于隔离用户对象
+			- Relation：Schema下的表、视图等关系对象
+	- 数据库和表目录操作
 	    - 数据库操作：
 		    - 创建数据库：`CREATE DATABASE db_name`
-            - 删除数据库：`DROP DATABASE db_name`
-        - 表目录操作：
-	        - 创建模式：`CREATE SCHEMA [schema_name] [AUTHORIZATION user_name]`
-            - 删除模式：`DROP SCHEMA [schema_name] [CASCADE | RESTRICT]`
+			- 删除数据库：`DROP DATABASE db_name`
+		- 表目录操作：
+			- 创建模式：`CREATE SCHEMA [schema_name] [AUTHORIZATION user_name]`
+			- 删除模式：`DROP SCHEMA [schema_name] [CASCADE | RESTRICT]`
 # SQL查询基本结构
 - 数据操作语言（DML）：用于访问和操作数据库中数据的语言，也叫查询语言（query language）
 	- 过程式查询语言（Procedural Query Language）：需要用户指定访问数据的具体步骤和方法
