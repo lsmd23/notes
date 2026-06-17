@@ -149,7 +149,7 @@
 	- `AS`语句用于给表、列更换别名，`AS`在语句中是可选的
 		- 例：`instructor AS i`，给`instructor`表起别名`i`，也可直接写作`instructor i`
 	- 常与`SELECT`操作结合使用，解决表名/列名冲突问题
-        - 例：`SELECT i.name, t.course_id FROM instructor AS i, teaches AS t WHERE i.ID = t.ID;`，查询`instructor`表和`teaches`表的连接结果，使用别名`i`和`t`来区分同名属性
+		- 例：`SELECT i.name, t.course_id FROM instructor AS i, teaches AS t WHERE i.ID = t.ID;`，查询`instructor`表和`teaches`表的连接结果，使用别名`i`和`t`来区分同名属性
 - 字符串运算（函数）：`LIKE`操作
 	- `LIKE`用于在`WHERE`子句中进行字符串模式匹配
 		- 通配符`%`：匹配任意长度的字符串（包括空字符串）
@@ -169,17 +169,17 @@
 	- `BETWEEN`操作：
 		- `BETWEEN`用于指定一个范围
 		- 用法：`[column_name] BETWEEN [lower_bound] AND [upper_bound]`
-	    - `BETWEEN`包含边界值，即`lower_bound`和`upper_bound
+	    - `BETWEEN`包含边界值，即`lower_bound`和`upper_bound`
 	- 元组比较：
 		- 多列同时匹配
-		- 例：`select name, course_id  from instructor, teaches where (instructor.ID, dept_name) = (teaches.ID, 'Biology'); 50`，查询教师表和选课表中教师ID和部门名字同时满足条件的记录，即查询教授生物课程的教师名字和课程ID
+		- 例：`select name, course_id  from instructor, teaches where (instructor.ID, dept_name) = (teaches.ID, 'Biology');`，查询教师表和选课表中教师ID和部门名字同时满足条件的记录，即查询教授生物课程的教师名字和课程ID
 - 空值：
 	- 定义：空值（NULL）表示未知或不存在的值
 	- 运算规则：
-        - 任何与NULL进行的算术运算结果都是NULL
-        - 任何与NULL进行的比较运算结果都是NULL（即未知）
-    - 空值判断：必须用`IS NULL`或`IS NOT NULL`来判断是否为空值
-        - 例：`SELECT name FROM student WHERE tot_cred IS NULL;`，查询学生表中`tot_cred`列值为NULL的学生名字
+		- 任何与NULL进行的算术运算结果都是NULL
+		- 任何与NULL进行的比较运算结果都是NULL（即未知）
+	- 空值判断：必须用`IS NULL`或`IS NOT NULL`来判断是否为空值
+		- 例：`SELECT name FROM student WHERE tot_cred IS NULL;`，查询学生表中`tot_cred`列值为NULL的学生名字
 - 三值逻辑：
     - SQL中的布尔逻辑包括三种值：`TRUE`、`FALSE`和`UNKNOWN`（即NULL）
     - 逻辑运算：
