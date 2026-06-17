@@ -194,14 +194,14 @@
 ## 集合操作
 - 基础集合操作：操作结果自动去重
 	- `UNION`：返回两个查询结果的并集
-    - `INTERSECT`：返回两个查询结果的交集
-    - `EXCEPT`：返回第一个查询结果中存在但第二个查询结果中不存在的记录
+	- `INTERSECT`：返回两个查询结果的交集
+	- `EXCEPT`：返回第一个查询结果中存在但第二个查询结果中不存在的记录
 	- 例：`SELECT dept_name FROM instructor UNION SELECT dept_name FROM student;`，查询教师表和学生表中所有不同的部门名字
 - 留重集合操作：保留重复记录
 	- `UNION ALL`：返回两个查询结果的并集，保留重复记录
-    - `INTERSECT ALL`：返回两个查询结果的交集，保留重复记录
-    - `EXCEPT ALL`：返回第一个查询结果中存在但第二个查询结果中不存在的记录，保留重复记录
-    - 例：`SELECT dept_name FROM instructor UNION ALL SELECT dept_name FROM student;`，查询教师表和学生表中所有部门名字，包括重复的部门名字
+	- `INTERSECT ALL`：返回两个查询结果的交集，保留重复记录
+	- `EXCEPT ALL`：返回第一个查询结果中存在但第二个查询结果中不存在的记录，保留重复记录
+	- 例：`SELECT dept_name FROM instructor UNION ALL SELECT dept_name FROM student;`，查询教师表和学生表中所有部门名字，包括重复的部门名字
 ## 聚合操作
 - 对列的多重集合值进行统计计算的操作
 - 核心聚合函数：
@@ -266,12 +266,12 @@
 			- `= some`$\Leftrightarrow$`in`
 			- `≠ some`不等价于`not in`，因为`not in`要求集合中没有任何元素满足条件，而`≠ some`只要求至少一个元素不满足条件
 	- `all`：与集合中所有元素满足比较关系
-        - 逻辑：`F <comp> all r`$\Leftrightarrow \forall t \in r$使得`F <comp> t`
-        - 等价关系：
-            - `= all`不等价于`in`，因为`in`要求至少一个元素满足条件，而`= all`要求所有元素都满足条件
-            - `≠ all`$\Leftrightarrow$`not in`
-    - 例：
-	    - 查询薪资高于生物系**任意**教师的教师：`salary > some (select salary from instructor where dept_name='Biology')`
+		- 逻辑：`F <comp> all r`$\Leftrightarrow \forall t \in r$使得`F <comp> t`
+		- 等价关系：
+			- `= all`不等价于`in`，因为`in`要求至少一个元素满足条件，而`= all`要求所有元素都满足条件
+			- `≠ all`$\Leftrightarrow$`not in`
+	- 例：
+		- 查询薪资高于生物系**任意**教师的教师：`salary > some (select salary from instructor where dept_name='Biology')`
 		- 查询资产高于布鲁克林**所有**支行的支行：`assets > all (select assets from branch where branch_city='Brooklyn')`
 - 空关系测试（`exists`/`not exists`）：
     - 功能：判断子查询返回的关系是否为空
@@ -282,15 +282,15 @@
         EXISTS (SELECT [column_name] FROM [table_name] WHERE [condition])
         ```
     - 关联子查询（Correlated Subquery）：子查询中的条件引用了外层查询的列，子查询的结果依赖于外层查询的当前行
-        - 例：`SELECT name FROM student s WHERE EXISTS (SELECT * FROM takes t WHERE t.ID = s.ID AND t.grade = 'A');`，查询学生表中至少选修过一门课程并且成绩为A的学生名字
+        - 例：`SELECT name FROM student s WHERE EXISTS (SELECT * FROM takes t WHERE t.ID = s.ID AND t.grade = 'A');`，查询学生表中至少有一门成绩为A的课程的学生名字
 - 重复元组测试（`unique`）
 	- 功能：判断子查询返回的关系是否包含重复元组
-    - 语法：
-        ```sql
-        UNIQUE (SELECT [column_name] FROM [table_name] WHERE [condition])
-        ```
-    - 例：`SELECT T.course_id FROM course as T WHERE UNIQUE (SELECT R.course_id FROM section AS R WHERE T.course_id = R.course_id AND R.year = 2017);`，查询课程表中在2017年至多开设过一次的课程ID
-    - 注：目前`UNIQUE`并未被广泛支持，实际使用中可以通过`GROUP BY`和`HAVING COUNT(*) = 1`来实现类似的功能
+	- 语法：
+		```sql
+		UNIQUE (SELECT [column_name] FROM [table_name] WHERE [condition])
+		```
+	- 例：`SELECT T.course_id FROM course as T WHERE UNIQUE (SELECT R.course_id FROM section AS R WHERE T.course_id = R.course_id AND R.year = 2017);`，查询课程表中在2017年至多开设过一次的课程ID
+	- 注：目前`UNIQUE`并未被广泛支持，实际使用中可以通过`GROUP BY`和`HAVING COUNT(*) = 1`来实现类似的功能
 ### `FROM`子句中的子查询
 - 功能：将子查询的结果作为临时表，参与外层查询的计算
 	- **必须为子查询的结果定义一个别名**，以便在外层查询中引用
@@ -303,11 +303,11 @@ group by dept_name
 having avg(salary)>42000;
 			```
 		* 子查询写法：
-            ```sql
+			```sql
 select dept_name, avg_salary 
 from (select dept_name, avg(salary) as avg_salary from instructor group by dept_name) as dept_avg 
 where avg_salary > 42000;
-            ```
+			```
 - `lateral`子句（SQL：2003标准）：横向关联子句
 	- 允许子查询引用外层查询中的列，即使子查询在`FROM`子句中
     - 语法：
