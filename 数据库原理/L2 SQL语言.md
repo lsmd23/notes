@@ -136,13 +136,13 @@
 		- 通配符`*`：`SELECT * FROM student;`，投影学生表中的所有列
 		- 常量：
 			- 无`FROM`：`SELECT 'Hello World' AS greeting;`，查询结果为一行一列，列名为`greeting`，值为`Hello World`
-            - 有`FROM`：`SELECT 'Hello World' AS greeting FROM student;`，查询结果为与学生表中行数相同的多行，每行的`greeting`列值为`Hello World`
-    - `FROM`子句：对应笛卡尔积操作，指定查询涉及的表
-	    - `SELECT * FROM instructor, teaches`，查询`instructor`表和`teaches`表的笛卡尔积
-	    - 同名属性需要用表名限定：`SELECT instructor.name, teaches.name FROM instructor, teaches;`，查询`instructor`表的`name`列和`teaches`表的`course_id`列
+			- 有`FROM`：`SELECT 'Hello World' AS greeting FROM student;`，查询结果为与学生表中行数相同的多行，每行的`greeting`列值为`Hello World`
+	- `FROM`子句：对应笛卡尔积操作，指定查询涉及的表
+		- `SELECT * FROM instructor, teaches`，查询`instructor`表和`teaches`表的笛卡尔积
+		- 同名属性需要用表名限定：`SELECT instructor.name, teaches.name FROM instructor, teaches;`，查询`instructor`表的`name`列和`teaches`表的`course_id`列
 	- `WHERE`子句：对应选择操作，指定查询的筛选条件
-        - 基础：`SELECT * FROM student WHERE dept_name = 'CS';`，查询学生表中`dept_name`为`CS`的所有列
-        - 复杂条件：`SELECT * FROM student WHERE dept_name = 'CS' AND tot_cred > 30;`，查询学生表中`dept_name`为`CS`且`tot_cred`大于30的所有列
+		- 基础：`SELECT * FROM student WHERE dept_name = 'CS';`，查询学生表中`dept_name`为`CS`的所有列
+		- 复杂条件：`SELECT * FROM student WHERE dept_name = 'CS' AND tot_cred > 30;`，查询学生表中`dept_name`为`CS`且`tot_cred`大于30的所有列
 # 附加操作与空值
 - 换名操作（Renaming）：`AS`语句
 	- 用法：`[old_name] AS [new_name]`
